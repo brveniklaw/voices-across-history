@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voices Across History™</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:        #1A1208;
+      --parchment:  #F5EDD6;
+      --parchment2: #EDE0BE;
+      --gold:       #B8892A;
+      --gold-light: #D4A84B;
+      --crimson:    #8B1A1A;
+      --crimson-dk: #5C0F0F;
+      --aged:       #7A6A4A;
+      --aged-lt:    #A89060;
+      --smoke:      #2C2210;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Crimson Text', Georgia, serif;
+      background: var(--ink);
+      color: var(--parchment);
+      overflow-x: hidden;
+    }
+
+    /* ── HERO ─────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(184,137,42,0.18) 0%, transparent 65%),
+        radial-gradient(ellipse at 20% 80%, rgba(139,26,26,0.12) 0%, transparent 50%),
+        linear-gradient(180deg, #0D0A04 0%, #1A1208 40%, #100C06 100%);
+    }
+
+    /* Parchment texture overlay */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* Stars */
+    .stars {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      background: var(--gold-light);
+      border-radius: 50%;
+      animation: twinkle var(--dur, 3s) ease-in-out infinite;
+      opacity: 0;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; transform: scale(0.8); }
+      50% { opacity: var(--max-op, 0.7); transform: scale(1); }
+    }
+
+    /* Decorative rule */
+    .ornament {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .ornament-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      max-width: 120px;
+    }
+    .ornament-star {
+      color: var(--gold);
+      font-size: 1.2rem;
+      letter-spacing: 0.5rem;
+    }
+
+    .eyebrow {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.35em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2.8rem, 7vw, 6rem);
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--parchment);
+      text-shadow: 0 2px 40px rgba(184,137,42,0.3), 0 0 80px rgba(184,137,42,0.1);
+      margin-bottom: 0.3rem;
+      position: relative;
+    }
+    .hero-title span {
+      color: var(--gold-light);
+    }
+
+    .hero-subtitle {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.85rem, 1.8vw, 1.1rem);
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      color: var(--aged-lt);
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-desc {
+      font-family: 'EB Garamond', serif;
+      font-size: clamp(1.1rem, 2vw, 1.35rem);
+      font-style: italic;
+      color: rgba(245,237,214,0.75);
+      max-width: 600px;
+      line-height: 1.7;
+      margin-bottom: 3rem;
+    }
+
+    .tm {
+      font-size: 0.45em;
+      vertical-align: super;
+      color: var(--gold);
+    }
+
+    /* ── COLLECTION CARDS ─────────────────────── */
+    .collections {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .collection-card {
+      width: 280px;
+      background: linear-gradient(145deg, rgba(26,18,8,0.95), rgba(15,10,4,0.98));
+      border: 1px solid rgba(184,137,42,0.3);
+      border-radius: 2px;
+      padding: 2rem 1.8rem;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      display: block;
+    }
+    .collection-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .collection-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(184,137,42,0.7);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 30px rgba(184,137,42,0.1);
+    }
+    .collection-card:hover::before { opacity: 1; }
+
+    .collection-card.coming-soon {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .collection-card.coming-soon:hover {
+      transform: none;
+      border-color: rgba(184,137,42,0.3);
+      box-shadow: none;
+    }
+
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .card-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+    .card-sub {
+      font-family: 'Crimson Text', serif;
+      font-size: 0.85rem;
+      color: var(--aged-lt);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .card-desc {
+      font-family: 'EB Garamond', serif;
+      font-style: italic;
+      font-size: 1rem;
+      color: rgba(245,237,214,0.65);
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    .card-tag {
+      display: inline-block;
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      padding: 0.3rem 0.9rem;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      border-radius: 1px;
+    }
+    .card-tag.soon {
+      border-color: var(--aged);
+      color: var(--aged);
+    }
+
+    /* ── SCROLL INDICATOR ─────────────────────── */
+    .scroll-hint {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      opacity: 0.5;
+      animation: bob 2s ease-in-out infinite;
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(6px); }
+    }
+    .scroll-hint span {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+    }
+    .scroll-arrow {
+      width: 18px;
+      height: 18px;
+      border-right: 1px solid var(--gold);
+      border-bottom: 1px solid var(--gold);
+      transform: rotate(45deg);
+    }
+
+    /* ── DOCUMENTS SECTION ────────────────────── */
+    .section {
+      padding: 6rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    .section-eyebrow {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight: 700;
+      color: var(--parchment);
+      margin-bottom: 1rem;
+    }
+    .section-rule {
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto;
+    }
+
+    /* Documents grid */
+    .docs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .doc-card {
+      background: rgba(26,18,8,0.6);
+      border: 1px solid rgba(184,137,42,0.2);
+      border-radius: 2px;
+      padding: 1.8rem;
+      transition: border-color 0.3s;
+    }
+    .doc-card:hover { border-color: rgba(184,137,42,0.5); }
+
+    .doc-year {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      margin-bottom: 0.4rem;
+    }
+    .doc-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--parchment);
+      margin-bottom: 0.6rem;
+    }
+    .doc-desc {
+      font-family: 'EB Garamond', serif;
+      font-style: italic;
+      font-size: 0.95rem;
+      color: rgba(245,237,214,0.6);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    .doc-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .doc-link {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: var(--gold-light);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(212,168,75,0.3);
+      padding-bottom: 1px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .doc-link:hover {
+      color: var(--parchment);
+      border-color: var(--parchment);
+    }
+
+    /* ── LOCATIONS SECTION ────────────────────── */
+    .locations-section {
+      background: rgba(12,8,2,0.6);
+      border-top: 1px solid rgba(184,137,42,0.12);
+      border-bottom: 1px solid rgba(184,137,42,0.12);
+      padding: 6rem 2rem;
+    }
+
+    .locations-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+    }
+    .loc-card {
+      padding: 1.5rem;
+      border: 1px solid rgba(184,137,42,0.15);
+      border-radius: 2px;
+      background: rgba(26,18,8,0.4);
+      transition: border-color 0.3s;
+    }
+    .loc-card:hover { border-color: rgba(184,137,42,0.4); }
+
+    .loc-flag {
+      font-size: 1.5rem;
+      margin-bottom: 0.6rem;
+      display: block;
+    }
+    .loc-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--parchment);
+      margin-bottom: 0.3rem;
+    }
+    .loc-city {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      margin-bottom: 0.6rem;
+    }
+    .loc-desc {
+      font-family: 'EB Garamond', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: rgba(245,237,214,0.55);
+      line-height: 1.55;
+      margin-bottom: 0.8rem;
+    }
+    .loc-link {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: var(--gold-light);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(212,168,75,0.3);
+    }
+    .loc-link:hover { border-color: var(--gold-light); }
+
+    /* ── FOOTER ───────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      border-top: 1px solid rgba(184,137,42,0.15);
+    }
+    .footer-brand {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .footer-copy {
+      font-family: 'EB Garamond', serif;
+      font-size: 0.85rem;
+      color: rgba(245,237,214,0.35);
+    }
+
+    /* ── SECTION DIVIDER ──────────────────────── */
+    .divider {
+      width: 100%;
+      max-width: 200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0 2rem;
+    }
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(184,137,42,0.4), transparent);
+    }
+    .divider-dot {
+      width: 4px;
+      height: 4px;
+      background: var(--gold);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 640px) {
+      .collections { flex-direction: column; align-items: center; }
+      .collection-card { width: 100%; max-width: 320px; }
+    }
+
+    /* ── PRICING SECTION ──────────────────────── */
+    .pricing-section {
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(184,137,42,0.10) 0%, transparent 70%),
+        linear-gradient(180deg, #0D0A04 0%, #100C06 100%);
+      border-top: 1px solid rgba(184,137,42,0.15);
+      border-bottom: 1px solid rgba(184,137,42,0.15);
+      padding: 5rem 2rem;
+      text-align: center;
+    }
+    .pricing-eyebrow {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      color: var(--gold);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 1.2rem;
+    }
+    .pricing-headline {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.5rem, 3.5vw, 2.4rem);
+      font-weight: 700;
+      color: var(--parchment);
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+    .pricing-rule {
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 2.5rem;
+    }
+    .pricing-amount {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 900;
+      color: var(--gold-light);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 60px rgba(212,168,75,0.25);
+    }
+    .pricing-amount sup {
+      font-size: 0.35em;
+      vertical-align: super;
+      color: var(--gold);
+    }
+    .pricing-period {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.75rem, 1.5vw, 0.95rem);
+      letter-spacing: 0.25em;
+      color: var(--aged-lt);
+      text-transform: uppercase;
+      margin-top: 0.3rem;
+      margin-bottom: 1.8rem;
+    }
+    .pricing-desc {
+      font-family: 'EB Garamond', serif;
+      font-style: italic;
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      color: rgba(245,237,214,0.65);
+      max-width: 500px;
+      margin: 0 auto 2rem;
+      line-height: 1.65;
+    }
+    .pricing-features {
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem 2rem;
+      flex-wrap: wrap;
+      margin-bottom: 2.5rem;
+    }
+    .pricing-feature {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      color: var(--aged-lt);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .pricing-feature::before {
+      content: '✦';
+      color: var(--gold);
+      font-size: 0.55rem;
+    }
+    .pricing-cta {
+      display: inline-block;
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink);
+      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      padding: 1rem 2.6rem;
+      border-radius: 1px;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(184,137,42,0.35);
+      min-height: 48px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+    }
+    .pricing-cta:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(184,137,42,0.45);
+    }
+    .pricing-promo {
+      margin-top: 1.4rem;
+      font-family: 'EB Garamond', serif;
+      font-size: 0.9rem;
+      color: rgba(245,237,214,0.35);
+    }
+    .pricing-promo a {
+      color: var(--gold);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(184,137,42,0.3);
+      transition: border-color 0.2s;
+    }
+    .pricing-promo a:hover { border-color: var(--gold); }
+
+    @media (max-width: 480px) {
+      .pricing-features { gap: 0.8rem 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HERO ──────────────────────────────────────── -->
+<section class="hero">
+  <div class="stars" id="stars"></div>
+
+  <div class="ornament">
+    <div class="ornament-line"></div>
+    <span class="ornament-star">✦ ✦ ✦</span>
+    <div class="ornament-line"></div>
+  </div>
+
+  <p class="eyebrow">An IntexiaU Institute Platform</p>
+
+  <h1 class="hero-title">
+    Voices<br><span>Across History</span><sup class="tm">TM</sup>
+  </h1>
+  <p class="hero-subtitle">Hear Them. Question Them. Learn From Them.</p>
+
+  <p class="hero-desc">
+    Converse directly with the founders, philosophers, and inventors who shaped civilization —
+    each voice grounded exclusively in their own words, writings, and verified primary sources.
+  </p>
+
+  <div class="collections">
+
+    <!-- Voices of the Republic -->
+    <a href="./republic/index.html" class="collection-card">
+      <span class="card-icon">🦅</span>
+      <div class="card-title">Voices of the Republic</div>
+      <div class="card-sub">American Founders</div>
+      <div class="card-desc">Consult Washington, Hamilton, Adams, Jefferson and the women who stood beside them — grounded in letters, pamphlets, and the founding documents.</div>
+      <span class="card-tag">Enter Collection →</span>
+    </a>
+
+    <!-- Voices of the Philosophers -->
+    <a href="./philosophers/index.html" class="collection-card">
+      <span class="card-icon">🏛️</span>
+      <div class="card-title">Voices of the Philosophers</div>
+      <div class="card-sub">The Great Thinkers</div>
+      <div class="card-desc">From Socrates to Nietzsche — engage the minds that defined ethics, reason, and the examined life, through their own authentic writings.</div>
+      <span class="card-tag">Enter Collection →</span>
+    </a>
+
+    <!-- Voices of the Inventors -->
+    <a href="#" class="collection-card coming-soon">
+      <span class="card-icon">⚙️</span>
+      <div class="card-title">Voices of the Inventors</div>
+      <div class="card-sub">Minds That Built the World</div>
+      <div class="card-desc">Edison, Tesla, Curie, Da Vinci, Turing — learn how they thought, failed, and created through their notebooks and correspondence.</div>
+      <span class="card-tag soon">Coming Soon</span>
+    </a>
+
+  </div>
+
+  <div class="scroll-hint">
+    <span>Explore</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ── PRICING ─────────────────────────────────────── -->
+<section class="pricing-section">
+  <span class="pricing-eyebrow">Simple, Honest Pricing</span>
+  <h2 class="pricing-headline">One Subscription.<br>All Three Collections.</h2>
+  <div class="pricing-rule"></div>
+
+  <div class="pricing-amount"><sup>$</sup>9.99</div>
+  <div class="pricing-period">per month</div>
+
+  <p class="pricing-desc">
+    Unlimited conversations with every founder, philosopher, and inventor in the library.
+  </p>
+
+  <div class="pricing-features">
+    <span class="pricing-feature">Primary Sources Only</span>
+    <span class="pricing-feature">Voice + Text</span>
+    <span class="pricing-feature">Mobile &amp; Desktop</span>
+  </div>
+
+  <a href="./republic/index.html" class="pricing-cta">Start Free — 7 Days on Us</a>
+
+  <p class="pricing-promo">Have a promo code? <a href="./republic/index.html">Redeem at any collection app.</a></p>
+</section>
+
+<!-- ── FOUNDING DOCUMENTS ─────────────────────────── -->
+<div style="padding: 5rem 2rem 2rem;">
+  <div class="section-header">
+    <span class="section-eyebrow">Primary Sources</span>
+    <h2 class="section-title">The Documents That Founded a Nation</h2>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="docs-grid" style="max-width:1100px;margin:0 auto;">
+
+    <div class="doc-card">
+      <div class="doc-year">1776</div>
+      <div class="doc-title">The Declaration of Independence</div>
+      <div class="doc-desc">Jefferson's assertion of natural rights and the colonies' formal separation from British rule — the founding statement of American purpose.</div>
+      <div class="doc-links">
+        <a href="https://www.archives.gov/founding-docs/declaration" target="_blank" class="doc-link">National Archives →</a>
+        <a href="https://www.loc.gov/item/mtjbib000159/" target="_blank" class="doc-link">Library of Congress →</a>
+        <a href="https://founders.archives.gov/" target="_blank" class="doc-link">Founders Online →</a>
+      </div>
+    </div>
+
+    <div class="doc-card">
+      <div class="doc-year">1787</div>
+      <div class="doc-title">The Constitution of the United States</div>
+      <div class="doc-desc">The supreme law of the land, establishing the framework of federal government and the separation of powers among three branches.</div>
+      <div class="doc-links">
+        <a href="https://www.archives.gov/founding-docs/constitution" target="_blank" class="doc-link">National Archives →</a>
+        <a href="https://constitution.congress.gov/" target="_blank" class="doc-link">Congress.gov →</a>
+        <a href="https://constitutionannotated.congress.gov/" target="_blank" class="doc-link">Annotated →</a>
+      </div>
+    </div>
+
+    <div class="doc-card">
+      <div class="doc-year">1791</div>
+      <div class="doc-title">The Bill of Rights</div>
+      <div class="doc-desc">The first ten amendments guaranteeing individual liberties — freedom of speech, religion, press, and the protections against government overreach.</div>
+      <div class="doc-links">
+        <a href="https://www.archives.gov/founding-docs/bill-of-rights" target="_blank" class="doc-link">National Archives →</a>
+        <a href="https://www.loc.gov/rr/program/bib/ourdocs/billofrights.html" target="_blank" class="doc-link">Library of Congress →</a>
+      </div>
+    </div>
+
+    <div class="doc-card">
+      <div class="doc-year">1787–1788</div>
+      <div class="doc-title">The Federalist Papers</div>
+      <div class="doc-desc">85 essays by Hamilton, Madison, and Jay advocating for ratification of the Constitution — the definitive commentary on its meaning and intent.</div>
+      <div class="doc-links">
+        <a href="https://guides.loc.gov/federalist-papers/full-text" target="_blank" class="doc-link">Full Text (LoC) →</a>
+        <a href="https://avalon.law.yale.edu/subject_menus/fed.asp" target="_blank" class="doc-link">Yale Avalon →</a>
+        <a href="https://founders.archives.gov/" target="_blank" class="doc-link">Founders Online →</a>
+      </div>
+    </div>
+
+    <div class="doc-card">
+      <div class="doc-year">1776</div>
+      <div class="doc-title">Common Sense — Thomas Paine</div>
+      <div class="doc-desc">The pamphlet that ignited popular support for independence, selling 500,000 copies in a nation of 2.5 million people.</div>
+      <div class="doc-links">
+        <a href="https://www.loc.gov/item/02007430/" target="_blank" class="doc-link">Library of Congress →</a>
+        <a href="https://avalon.law.yale.edu/18th_century/paine.asp" target="_blank" class="doc-link">Yale Avalon →</a>
+      </div>
+    </div>
+
+    <div class="doc-card">
+      <div class="doc-year">1796</div>
+      <div class="doc-title">Washington's Farewell Address</div>
+      <div class="doc-desc">Washington's warning against partisan division, entangling foreign alliances, and the dangers of regional factionalism — as relevant today as in 1796.</div>
+      <div class="doc-links">
+        <a href="https://www.archives.gov/milestone-documents/george-washingtons-farewell-address" target="_blank" class="doc-link">National Archives →</a>
+        <a href="https://www.senate.gov/artandhistory/history/resources/pdf/Washingtons_Farewell_Address.pdf" target="_blank" class="doc-link">U.S. Senate →</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── LOCATIONS ──────────────────────────────────── -->
+<div style="padding: 3rem 0;">
+  <div class="divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+</div>
+
+<section class="locations-section">
+  <div class="section-header">
+    <span class="section-eyebrow">Visit in Person</span>
+    <h2 class="section-title">Where History Lives</h2>
+    <div class="section-rule"></div>
+    <p style="font-family:'EB Garamond',serif;font-style:italic;color:rgba(245,237,214,0.6);margin-top:1rem;font-size:1.1rem;">Plan your journey to the archives, estates, and halls where these voices once echoed.</p>
+  </div>
+
+  <div class="locations-grid">
+
+    <div class="loc-card">
+      <span class="loc-flag">🏛️</span>
+      <div class="loc-name">National Archives</div>
+      <div class="loc-city">Washington, D.C.</div>
+      <div class="loc-desc">The original Declaration, Constitution, and Bill of Rights on permanent display in the Rotunda for the Charters of Freedom.</div>
+      <a href="https://www.archives.gov/visit" target="_blank" class="loc-link">Plan Your Visit →</a>
+    </div>
+
+    <div class="loc-card">
+      <span class="loc-flag">📚</span>
+      <div class="loc-name">Library of Congress</div>
+      <div class="loc-city">Washington, D.C.</div>
+      <div class="loc-desc">The world's largest library holds Jefferson's original draft of the Declaration, the Federalist Papers manuscripts, and millions of founding-era documents.</div>
+      <a href="https://www.loc.gov/visit/" target="_blank" class="loc-link">Plan Your Visit →</a>
+    </div>
+
+    <div class="loc-card">
+      <span class="loc-flag">🔔</span>
+      <div class="loc-name">Independence Hall & Liberty Bell</div>
+      <div class="loc-city">Philadelphia, PA</div>
+      <div class="loc-desc">The room where the Declaration was signed and the Constitution debated. The Liberty Bell Center is across the street.</div>
+      <a href="https://www.nps.gov/inde/index.htm" target="_blank" class="loc-link">Plan Your Visit →</a>
+    </div>
+
+    <div class="loc-card">
+      <span class="loc-flag">🌿</span>
+      <div class="loc-name">Monticello</div>
+      <div class="loc-city">Charlottesville, VA</div>
+      <div class="loc-desc">Thomas Jefferson's home and plantation. His library, architectural inventions, and private papers are archived and interpreted here.</div>
+      <a href="https://www.monticello.org/visit/" target="_blank" class="loc-link">Plan Your Visit →</a>
+    </div>
+
+    <div class="loc-card">
+      <span class="loc-flag">🏡</span>
+      <div class="loc-name">Mount Vernon</div>
+      <div class="loc-city">Mount Vernon, VA</div>
+      <div class="loc-desc">George Washington's estate on the Potomac. His library, correspondence collection, and the Fred W. Smith National Library for the Study of George Washington.</div>
+      <a href="https://www.mountvernon.org/plan-your-visit/" target="_blank" class="loc-link">Plan Your Visit →</a>
+    </div>
+
+    <div class="loc-card">
+      <span class="loc-flag">🏛️</span>
+      <div class="loc-name">Montpelier</div>
+      <div class="loc-city">Orange County, VA</div>
+      <div class="loc-desc">James Madison's estate — home of the Father of the Constitution. The Montpelier Center for the Constitution conducts ongoing research.</div>
+      <a href="https://www.montpelier.org/visit/" target="_blank" class="loc-link">Plan Your Visit →</a>
+    </div>
+
+    <div class="loc-card">
+      <span class="loc-flag">🦅</span>
+      <div class="loc-name">Adams National Historical Park</div>
+      <div class="loc-city">Quincy, MA</div>
+      <div class="loc-desc">Home of John and Abigail Adams. The Stone Library holds 14,000 volumes from the Adams family collection, including Abigail's original letters.</div>
+      <a href="https://www.nps.gov/adam/index.htm" target="_blank" class="loc-link">Plan Your Visit →</a>
+    </div>
+
+    <div class="loc-card">
+      <span class="loc-flag">🕯️</span>
+      <div class="loc-name">Franklin Court & Museum</div>
+      <div class="loc-city">Philadelphia, PA</div>
+      <div class="loc-desc">The site of Benjamin Franklin's home. The underground museum features his printing press, original correspondence, and a working post office.</div>
+      <a href="https://www.nps.gov/inde/learn/historyculture/franklincourt.htm" target="_blank" class="loc-link">Plan Your Visit →</a>
+    </div>
+
+    <div class="loc-card">
+      <span class="loc-flag">📜</span>
+      <div class="loc-name">Hamilton Grange National Memorial</div>
+      <div class="loc-city">New York City, NY</div>
+      <div class="loc-desc">Alexander Hamilton's only home. The Grange was built in 1802 and is now a National Memorial in Harlem, with exhibits on his life and writings.</div>
+      <a href="https://www.nps.gov/hagr/index.htm" target="_blank" class="loc-link">Plan Your Visit →</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────── -->
+<footer>
+  <div class="footer-brand">Voices Across History™</div>
+  <p class="footer-copy">An IntexiaU Institute Platform &nbsp;·&nbsp; All agent responses drawn exclusively from verified primary sources &nbsp;·&nbsp; © 2026 IntexiaU Corp</p>
+</footer>
+
+<script>
+  // Generate stars
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 1;
+    s.style.cssText = `
+      left: ${Math.random() * 100}%;
+      top: ${Math.random() * 100}%;
+      width: ${size}px;
+      height: ${size}px;
+      --dur: ${2 + Math.random() * 4}s;
+      --max-op: ${0.3 + Math.random() * 0.6};
+      animation-delay: ${Math.random() * 5}s;
+    `;
+    starsEl.appendChild(s);
+  }
+</script>
+</body>
+</html>
