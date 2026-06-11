@@ -321,10 +321,13 @@ export default function VoicesOfThePhilosophers() {
     if (!email || !email.includes("@")) { setEmailError("Please enter a valid email address."); return; }
     setEmailLoading(true); setEmailError("");
     try {
-      const res = await fetch("/api/start-trial", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+      const res = await fetch("/api/create-checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
       const data = await res.json();
-      if (data.success) { saveAccess({ email, access_type: data.access_type || "trial", trial_expires_at: data.expires_at || null, subscription_end: data.subscription_end || null }); setView("gallery"); }
-      else setEmailError(data.error || "Something went wrong. Please try again.");
+      if (data.url) {
+        saveAccess({ email, access_type: "pending" });
+        window.location.href = data.url;
+        return;
+      } else setEmailError(data.error || "Something went wrong. Please try again.");
     } catch { setEmailError("Unable to connect. Please try again."); }
     setEmailLoading(false);
   }
@@ -490,7 +493,7 @@ export default function VoicesOfThePhilosophers() {
         <h2 style={{ fontFamily: "'Cinzel',serif", fontSize: isMobile ? "1.5rem" : "1.8rem", fontWeight: 700, color: C.text, marginBottom: "0.6rem", lineHeight: 1.2 }}>Start Your Free 7-Day Trial</h2>
         <div style={{ width: 80, height: 1, background: `linear-gradient(90deg,transparent,${C.blue},transparent)`, margin: "1rem auto 1.5rem" }} />
         <p style={{ fontFamily: "'EB Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: C.textMuted, lineHeight: 1.65, marginBottom: "1.8rem" }}>
-          Enter your email to unlock full access — no payment required for 7 days.
+          Add your card to start your free 7-day trial — $0 today, then $9.99/month. Cancel anytime.
         </p>
         <input type="email" value={emailInput} onChange={e => { setEmailInput(e.target.value); setEmailError(""); }} onKeyDown={e => e.key === "Enter" && submitEmail()}
           placeholder="your@email.com"
@@ -498,7 +501,7 @@ export default function VoicesOfThePhilosophers() {
         {emailError && <p style={{ color: "#c0392b", fontFamily: "'Crimson Text',serif", fontSize: "0.9rem", marginBottom: "0.6rem" }}>{emailError}</p>}
         <button onClick={submitEmail} disabled={emailLoading}
           style={{ fontFamily: "'Cinzel',serif", fontSize: "0.8rem", letterSpacing: "0.15em", padding: "0.9rem 2rem", background: C.blueBtn, color: C.text, border: "none", borderRadius: 1, cursor: "pointer", width: "100%", minHeight: 50, marginBottom: "0.8rem", opacity: emailLoading ? 0.7 : 1 }}>
-          {emailLoading ? "Starting trial…" : "Begin 7-Day Free Trial"}
+          {emailLoading ? "Opening secure checkout…" : "Begin 7-Day Free Trial"}
         </button>
         <p style={{ fontFamily: "'EB Garamond',serif", fontStyle: "italic", fontSize: "0.8rem", color: "rgba(212,200,168,0.35)", marginBottom: "1.2rem" }}>$9.99/month after trial. Cancel anytime.</p>
         <PromoSection emailForPromo={emailInput.trim()} />
