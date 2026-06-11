@@ -338,20 +338,16 @@ export default function VoicesOfTheRepublic() {
     setEmailLoading(true);
     setEmailError("");
     try {
-      const res = await fetch("/api/start-trial", {
+      const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
       });
       const data = await res.json();
-      if (data.success) {
-        saveAccess({
-          email,
-          access_type: data.access_type || "trial",
-          trial_expires_at: data.expires_at || null,
-          subscription_end: data.subscription_end || null
-        });
-        setView("gallery");
+      if (data.url) {
+        saveAccess({ email, access_type: "pending" });
+        window.location.href = data.url;
+        return;
       } else {
         setEmailError(data.error || "Something went wrong. Please try again.");
       }
@@ -576,7 +572,7 @@ export default function VoicesOfTheRepublic() {
         </h2>
         <div style={S.landingRule} />
         <p style={{ fontFamily: "'EB Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "rgba(245,237,214,0.65)", lineHeight: 1.65, margin: "1.2rem 0 1.8rem" }}>
-          Enter your email to unlock full access — no payment required for 7 days.
+          Add your card to start your free 7-day trial — $0 today, then $9.99/month. Cancel anytime.
         </p>
 
         <input
@@ -594,7 +590,7 @@ export default function VoicesOfTheRepublic() {
           disabled={emailLoading}
           style={{ ...S.enterBtn, width: "100%", minHeight: 50, marginBottom: "0.8rem", opacity: emailLoading ? 0.7 : 1 }}
         >
-          {emailLoading ? "Starting trial…" : "Begin 7-Day Free Trial"}
+          {emailLoading ? "Opening secure checkout…" : "Begin 7-Day Free Trial"}
         </button>
 
         <p style={{ fontFamily: "'EB Garamond',serif", fontStyle: "italic", fontSize: "0.8rem", color: "rgba(245,237,214,0.35)", marginBottom: "1.2rem" }}>
