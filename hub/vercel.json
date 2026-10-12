@@ -9,24 +9,36 @@
       "destination": "https://voices-of-the-republic.vercel.app/republic/"
     },
     {
-      "source": "/republic/:path*",
-      "destination": "https://voices-of-the-republic.vercel.app/republic/:path*"
+      "source": "/republic/",
+      "destination": "https://voices-of-the-republic.vercel.app/republic/"
+    },
+    {
+      "source": "/republic/:path+",
+      "destination": "https://voices-of-the-republic.vercel.app/republic/:path+"
     },
     {
       "source": "/philosophers",
       "destination": "https://voices-of-the-philosophers.vercel.app/philosophers/"
     },
     {
-      "source": "/philosophers/:path*",
-      "destination": "https://voices-of-the-philosophers.vercel.app/philosophers/:path*"
+      "source": "/philosophers/",
+      "destination": "https://voices-of-the-philosophers.vercel.app/philosophers/"
+    },
+    {
+      "source": "/philosophers/:path+",
+      "destination": "https://voices-of-the-philosophers.vercel.app/philosophers/:path+"
     },
     {
       "source": "/inventors",
       "destination": "https://voices-of-the-inventors.vercel.app/inventors/"
     },
     {
-      "source": "/inventors/:path*",
-      "destination": "https://voices-of-the-inventors.vercel.app/inventors/:path*"
+      "source": "/inventors/",
+      "destination": "https://voices-of-the-inventors.vercel.app/inventors/"
+    },
+    {
+      "source": "/inventors/:path+",
+      "destination": "https://voices-of-the-inventors.vercel.app/inventors/:path+"
     }
   ]
 }
