@@ -2,5 +2,26 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "framework": "vite"
+  "framework": "vite",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/philosophers/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/philosophers/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/philosophers",
+      "destination": "/philosophers/index.html"
+    },
+    {
+      "source": "/philosophers/:path*",
+      "destination": "/philosophers/index.html"
+    }
+  ]
 }

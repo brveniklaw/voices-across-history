@@ -1,52 +1,35 @@
-// api/apply-promo.js — Vercel Serverless Function
-// Validates a promo code and grants access to the user
-
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// POST /api/apply-promo — redeems a Voices promo code for the signed-in visitor.
+import { admin, getUser, accessFor, readJson } from './_lib.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
+  const user = await getUser(req);
+  if (!user) return res.status(401).json({ error: 'Please sign in first.' });
+  const code = String(readJson(req).code || '').toUpperCase().trim();
+  if (!code) return res.status(400).json({ error: 'Please enter a promo code.' });
 
-  const { code, email } = req.body;
-  if (!code || !email) return res.status(400).json({ error: 'Missing code or email' });
+  const { data: promo } = await admin.from('vah_promo_codes').select('*').eq('code', code).eq('is_active', true).maybeSingle();
+  if (!promo) return res.status(404).json({ error: 'That code isn’t valid.' });
+  if (promo.expires_at && new Date(promo.expires_at) < new Date()) return res.status(410).json({ error: 'This code has expired.' });
+  if (promo.max_uses !== null && promo.uses_count >= promo.max_uses) return res.status(410).json({ error: 'This code has reached its usage limit.' });
 
-  const { data: promo } = await supabase
-    .from('vah_promo_codes')
-    .select('*')
-    .eq('code', code.toUpperCase().trim())
-    .eq('is_active', true)
-    .single();
-
-  if (!promo) return res.status(404).json({ error: 'Invalid or expired code' });
-
-  if (promo.expires_at && new Date(promo.expires_at) < new Date()) {
-    return res.status(410).json({ error: 'This code has expired' });
+  const current = await accessFor(user);
+  if (current.access_type === 'permanent' || current.access_type === 'subscribed') {
+    if (current.active) return res.status(200).json({ access: current, note: 'You already have full access.' });
   }
 
-  if (promo.max_uses !== null && promo.uses_count >= promo.max_uses) {
-    return res.status(410).json({ error: 'This code has reached its usage limit' });
-  }
-
-  const accessType = promo.type === 'permanent' ? 'permanent' : 'promo_trial';
-  const expiresAt = promo.type === 'permanent'
-    ? null
-    : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-  await supabase.from('vah_users').upsert({
-    email: email.toLowerCase().trim(),
-    access_type: accessType,
+  const email = current.email;
+  const permanent = promo.type === 'permanent';
+  const expiresAt = permanent ? null : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await admin.from('vah_users').upsert({
+    email,
+    auth_user_id: user.id,
+    access_type: permanent ? 'permanent' : 'promo_trial',
     trial_expires_at: expiresAt,
-    promo_code_used: code.toUpperCase().trim(),
-    last_seen_at: new Date().toISOString()
+    promo_code_used: code,
+    last_seen_at: new Date().toISOString(),
   }, { onConflict: 'email' });
-
-  await supabase.from('vah_promo_codes')
-    .update({ uses_count: promo.uses_count + 1 })
-    .eq('id', promo.id);
-
-  return res.status(200).json({ success: true, access_type: accessType, expires_at: expiresAt });
+  if (error) return res.status(500).json({ error: 'Unable to apply the code. Please try again.' });
+  await admin.from('vah_promo_codes').update({ uses_count: (promo.uses_count || 0) + 1 }).eq('id', promo.id);
+  return res.status(200).json({ access: await accessFor(user) });
 }

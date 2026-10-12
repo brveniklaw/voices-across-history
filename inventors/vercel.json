@@ -2,5 +2,26 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "framework": "vite"
+  "framework": "vite",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/inventors/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/inventors/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/inventors",
+      "destination": "/inventors/index.html"
+    },
+    {
+      "source": "/inventors/:path*",
+      "destination": "/inventors/index.html"
+    }
+  ]
 }

@@ -2,5 +2,26 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "framework": "vite"
+  "framework": "vite",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/republic/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/republic/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/republic",
+      "destination": "/republic/index.html"
+    },
+    {
+      "source": "/republic/:path*",
+      "destination": "/republic/index.html"
+    }
+  ]
 }

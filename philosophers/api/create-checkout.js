@@ -1,77 +1,37 @@
-// api/create-checkout.js — Vercel Serverless Function
-// Creates a Stripe Checkout session for the $9.99/month subscription
-
+// POST /api/create-checkout — starts the $9.99/month membership (7-day free trial for new members).
+// One membership covers every collection; if the visitor already has access, no checkout is created.
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { getUser, accessFor, returnUrl, readJson } from './_lib.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
+  const user = await getUser(req);
+  if (!user) return res.status(401).json({ error: 'Please sign in first.' });
+  const { returnPath, collection } = readJson(req);
 
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email is required' });
+  const access = await accessFor(user);
+  if (access.active) return res.status(200).json({ access });
 
-  const normalizedEmail = email.toLowerCase().trim();
-  const origin = req.headers.origin || `https://${req.headers.host}`;
+  const priceId = process.env.STRIPE_PRICE_ID;
+  if (!process.env.STRIPE_SECRET_KEY || !priceId) return res.status(503).json({ error: 'Membership sign-up is not available right now.' });
 
   try {
-    // Only brand-new users get the free trial; returning users are charged right away.
-    const { data: existing } = await supabase
-      .from('vah_users')
-      .select('id, access_type, trial_expires_at, subscription_end')
-      .eq('email', normalizedEmail)
-      .single();
-
-    // One subscription covers every collection. If this email already has active access
-    // (from any collection, a promo code, or a subscription), don't start a second checkout.
-    if (existing && hasActiveAccess(existing)) {
-      return res.status(200).json({
-        access: {
-          email: normalizedEmail,
-          access_type: existing.access_type,
-          trial_expires_at: existing.trial_expires_at || null,
-          subscription_end: existing.subscription_end || null
-        }
-      });
-    }
-
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const back = returnUrl(req, returnPath);
     const config = {
-      payment_method_types: ['card'],
       mode: 'subscription',
-      customer_email: normalizedEmail,
-      line_items: [{
-        price: process.env.STRIPE_PRICE_ID,
-        quantity: 1
-      }],
-      success_url: `${origin}/?checkout=success`,
-      cancel_url: `${origin}/?checkout=cancelled`,
-      metadata: { app: 'philosophers' }
+      customer_email: access.email,
+      client_reference_id: user.id,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${back}?checkout=success`,
+      cancel_url: `${back}?checkout=cancelled`,
+      metadata: { app: String(collection || 'voices').slice(0, 40), auth_user_id: user.id },
     };
-
-    if (!existing) {
-      config.subscription_data = { trial_period_days: 7 };
-    }
-
+    if (access.is_new) config.subscription_data = { trial_period_days: 7 };
     const session = await stripe.checkout.sessions.create(config);
-
     return res.status(200).json({ url: session.url });
   } catch (err) {
     console.error('Stripe checkout error:', err);
-    return res.status(500).json({ error: 'Unable to create checkout session.' });
+    return res.status(500).json({ error: 'Unable to start checkout. Please try again.' });
   }
-}
-
-function hasActiveAccess(u) {
-  const now = new Date();
-  if (u.access_type === 'permanent') return true;
-  if (u.access_type === 'subscribed') return !u.subscription_end || new Date(u.subscription_end) > now;
-  if (u.access_type === 'trial' || u.access_type === 'promo_trial') {
-    return !!u.trial_expires_at && new Date(u.trial_expires_at) > now;
-  }
-  return false;
 }
