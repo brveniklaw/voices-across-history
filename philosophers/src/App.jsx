@@ -323,6 +323,12 @@ export default function VoicesOfThePhilosophers() {
     try {
       const res = await fetch("/api/create-checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
       const data = await res.json();
+      if (data.access) {
+        saveAccess(data.access);
+        setView(isAccessValid(data.access) ? "gallery" : "paywall");
+        setEmailLoading(false);
+        return;
+      }
       if (data.url) {
         saveAccess({ email, access_type: "pending" });
         window.location.href = data.url;
@@ -353,6 +359,7 @@ export default function VoicesOfThePhilosophers() {
     try {
       const res = await fetch("/api/create-checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
       const data = await res.json();
+      if (data.access) { saveAccess(data.access); setCheckoutLoading(false); setView(isAccessValid(data.access) ? "gallery" : "paywall"); return; }
       if (data.url) window.location.href = data.url;
       else { alert("Checkout unavailable. Please try again."); setCheckoutLoading(false); }
     } catch { alert("Unable to connect. Please try again."); setCheckoutLoading(false); }
@@ -493,7 +500,7 @@ export default function VoicesOfThePhilosophers() {
         <h2 style={{ fontFamily: "'Cinzel',serif", fontSize: isMobile ? "1.5rem" : "1.8rem", fontWeight: 700, color: C.text, marginBottom: "0.6rem", lineHeight: 1.2 }}>Start Your Free 7-Day Trial</h2>
         <div style={{ width: 80, height: 1, background: `linear-gradient(90deg,transparent,${C.blue},transparent)`, margin: "1rem auto 1.5rem" }} />
         <p style={{ fontFamily: "'EB Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: C.textMuted, lineHeight: 1.65, marginBottom: "1.8rem" }}>
-          Add your card to start your free 7-day trial — $0 today, then $9.99/month. Cancel anytime.
+          Add your card to start your free 7-day trial — $0 today, then $9.99/month for the whole Voices Across History platform. Cancel anytime. Already a member from another collection? Enter the same email and you're in.
         </p>
         <input type="email" value={emailInput} onChange={e => { setEmailInput(e.target.value); setEmailError(""); }} onKeyDown={e => e.key === "Enter" && submitEmail()}
           placeholder="your@email.com"
@@ -503,7 +510,7 @@ export default function VoicesOfThePhilosophers() {
           style={{ fontFamily: "'Cinzel',serif", fontSize: "0.8rem", letterSpacing: "0.15em", padding: "0.9rem 2rem", background: C.blueBtn, color: C.text, border: "none", borderRadius: 1, cursor: "pointer", width: "100%", minHeight: 50, marginBottom: "0.8rem", opacity: emailLoading ? 0.7 : 1 }}>
           {emailLoading ? "Opening secure checkout…" : "Begin 7-Day Free Trial"}
         </button>
-        <p style={{ fontFamily: "'EB Garamond',serif", fontStyle: "italic", fontSize: "0.8rem", color: "rgba(212,200,168,0.35)", marginBottom: "1.2rem" }}>$9.99/month after trial. Cancel anytime.</p>
+        <p style={{ fontFamily: "'EB Garamond',serif", fontStyle: "italic", fontSize: "0.8rem", color: "rgba(212,200,168,0.35)", marginBottom: "1.2rem" }}>$9.99/month after trial — one subscription, every collection. Cancel anytime.</p>
         <PromoSection emailForPromo={emailInput.trim()} />
         <button onClick={() => setView("landing")} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Cinzel',serif", fontSize: "0.65rem", letterSpacing: "0.1em", color: `rgba(106,156,188,0.5)`, marginTop: "1.5rem", display: "block", width: "100%" }}>← Back</button>
       </div>

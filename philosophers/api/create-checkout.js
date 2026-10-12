@@ -23,9 +23,22 @@ export default async function handler(req, res) {
     // Only brand-new users get the free trial; returning users are charged right away.
     const { data: existing } = await supabase
       .from('vah_users')
-      .select('id')
+      .select('id, access_type, trial_expires_at, subscription_end')
       .eq('email', normalizedEmail)
       .single();
+
+    // One subscription covers every collection. If this email already has active access
+    // (from any collection, a promo code, or a subscription), don't start a second checkout.
+    if (existing && hasActiveAccess(existing)) {
+      return res.status(200).json({
+        access: {
+          email: normalizedEmail,
+          access_type: existing.access_type,
+          trial_expires_at: existing.trial_expires_at || null,
+          subscription_end: existing.subscription_end || null
+        }
+      });
+    }
 
     const config = {
       payment_method_types: ['card'],
@@ -51,4 +64,14 @@ export default async function handler(req, res) {
     console.error('Stripe checkout error:', err);
     return res.status(500).json({ error: 'Unable to create checkout session.' });
   }
+}
+
+function hasActiveAccess(u) {
+  const now = new Date();
+  if (u.access_type === 'permanent') return true;
+  if (u.access_type === 'subscribed') return !u.subscription_end || new Date(u.subscription_end) > now;
+  if (u.access_type === 'trial' || u.access_type === 'promo_trial') {
+    return !!u.trial_expires_at && new Date(u.trial_expires_at) > now;
+  }
+  return false;
 }

@@ -344,6 +344,12 @@ export default function VoicesOfTheRepublic() {
         body: JSON.stringify({ email })
       });
       const data = await res.json();
+      if (data.access) {
+        saveAccess(data.access);
+        setView(isAccessValid(data.access) ? "gallery" : "paywall");
+        setEmailLoading(false);
+        return;
+      }
       if (data.url) {
         saveAccess({ email, access_type: "pending" });
         window.location.href = data.url;
@@ -395,6 +401,7 @@ export default function VoicesOfTheRepublic() {
         body: JSON.stringify({ email })
       });
       const data = await res.json();
+      if (data.access) { saveAccess(data.access); setCheckoutLoading(false); setView(isAccessValid(data.access) ? "gallery" : "paywall"); return; }
       if (data.url) { window.location.href = data.url; }
       else { alert("Checkout unavailable. Please try again."); setCheckoutLoading(false); }
     } catch {
@@ -572,7 +579,7 @@ export default function VoicesOfTheRepublic() {
         </h2>
         <div style={S.landingRule} />
         <p style={{ fontFamily: "'EB Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "rgba(245,237,214,0.65)", lineHeight: 1.65, margin: "1.2rem 0 1.8rem" }}>
-          Add your card to start your free 7-day trial — $0 today, then $9.99/month. Cancel anytime.
+          Add your card to start your free 7-day trial — $0 today, then $9.99/month for the whole Voices Across History platform. Cancel anytime. Already a member from another collection? Enter the same email and you're in.
         </p>
 
         <input
@@ -594,7 +601,7 @@ export default function VoicesOfTheRepublic() {
         </button>
 
         <p style={{ fontFamily: "'EB Garamond',serif", fontStyle: "italic", fontSize: "0.8rem", color: "rgba(245,237,214,0.35)", marginBottom: "1.2rem" }}>
-          $9.99/month after trial. Cancel anytime.
+          $9.99/month after trial — one subscription, every collection. Cancel anytime.
         </p>
 
         <PromoSection emailForPromo={emailInput.trim()} />
