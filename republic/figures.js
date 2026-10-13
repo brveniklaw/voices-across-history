@@ -2,6 +2,8 @@
 // Used by the app (src/App.jsx) and by the server (api/chat.js), which keeps each figure's instructions.
 export const COLLECTION = {
   id: "republic",
+  kicker: "American founders, in their own words",
+  countLabel: "founders & founding wives",
   name: "Voices of the Republic",
   titleTop: "Voices of the",
   titleBottom: "Republic",
@@ -16,10 +18,9 @@ export const COLLECTION = {
   otherCollections: [{ label: "Voices of the Philosophers", href: "/philosophers/" }, { label: "Voices of the Inventors", href: "/inventors/" }],
   greeting: (f) => `I am ${f.name}. ${f.title}. I stand ready to speak with you on matters of consequence — ask of me what you will, and I shall answer faithfully from what I have written and said.`,
   theme: {
-    bg: "#100C06", bgGrad: "linear-gradient(180deg,#0D0A04 0%,#1A1208 50%,#100C06 100%)", headerBg: "rgba(10,8,2,0.96)",
-    panel: "rgba(26,18,8,0.85)", text: "#F5EDD6", muted: "rgba(245,237,214,0.68)", faint: "rgba(245,237,214,0.42)",
-    accent: "#B8892A", accentLt: "#D4A84B", btn: "linear-gradient(135deg,#B8892A,#8B6820)",
-    border: "rgba(184,137,42,0.3)", borderFaint: "rgba(184,137,42,0.12)", accentAlpha: "rgba(184,137,42,0.18)", accentAlpha2: "rgba(184,137,42,0.06)",
+    ink: "#0D1626", deep: "#132036", raise: "#1C2C48", paper: "#EFE7D6",
+    muted: "rgba(239,231,214,0.74)", faint: "rgba(239,231,214,0.5)", line: "rgba(239,231,214,0.13)",
+    accent: "#C9A24A", accentSoft: "#DDB866", signal: "#E9D08A",
   },
 };
 
@@ -28,9 +29,9 @@ export const FIGURES = [
     "id": "washington",
     "name": "George Washington",
     "title": "Commander-in-Chief & First President",
-    "years": "1732–1799",
+    "years": "1732\u20131799",
     "portrait": "/portraits/washington.jpg",
-    "portraitCredit": "Gilbert Stuart, c. 1796 — National Portrait Gallery",
+    "portraitCredit": "Gilbert Stuart, c. 1796 \u2014 National Portrait Gallery",
     "voiceProfile": {
       "pitch": 0.85,
       "rate": 0.88,
@@ -47,16 +48,16 @@ export const FIGURES = [
       "Rules of Civility"
     ],
     "systemPrompt": "You are George Washington, first President and Commander-in-Chief of the Continental Army. Respond only from the perspective of your verified writings: your Farewell Address, official correspondence, letters to Congress and fellow founders, and your Rules of Civility. You speak with measured authority, dignity, and restraint. You deeply distrust faction and partisan spirit. You believe in duty, honor, and sacrifice for the republic above personal ambition. Speak in a formal but accessible manner consistent with late 18th century English. Never speculate beyond what your documented record supports. If asked something outside your documented views, say so plainly.",
-    "accent": "Virginia planter — measured, grave, authoritative",
+    "accent": "Virginia planter \u2014 measured, grave, authoritative",
     "color": "#4A6741"
   },
   {
     "id": "hamilton",
     "name": "Alexander Hamilton",
     "title": "First Secretary of the Treasury",
-    "years": "1755–1804",
+    "years": "1755\u20131804",
     "portrait": "/portraits/hamilton.jpg",
-    "portraitCredit": "John Trumbull, 1806 — National Portrait Gallery",
+    "portraitCredit": "John Trumbull, 1806 \u2014 National Portrait Gallery",
     "voiceProfile": {
       "pitch": 1,
       "rate": 1,
@@ -80,9 +81,9 @@ export const FIGURES = [
     "id": "jefferson",
     "name": "Thomas Jefferson",
     "title": "Author of the Declaration & Third President",
-    "years": "1743–1826",
+    "years": "1743\u20131826",
     "portrait": "/portraits/jefferson.jpg",
-    "portraitCredit": "Rembrandt Peale, 1800 — White House Collection",
+    "portraitCredit": "Rembrandt Peale, 1800 \u2014 White House Collection",
     "voiceProfile": {
       "pitch": 0.92,
       "rate": 0.9,
@@ -106,9 +107,9 @@ export const FIGURES = [
     "id": "madison",
     "name": "James Madison",
     "title": "Father of the Constitution & Fourth President",
-    "years": "1751–1836",
+    "years": "1751\u20131836",
     "portrait": "/portraits/madison.jpg",
-    "portraitCredit": "John Vanderlyn, 1816 — White House Collection",
+    "portraitCredit": "John Vanderlyn, 1816 \u2014 White House Collection",
     "voiceProfile": {
       "pitch": 0.9,
       "rate": 0.85,
@@ -132,9 +133,9 @@ export const FIGURES = [
     "id": "adams",
     "name": "John Adams",
     "title": "First Vice President & Second President",
-    "years": "1735–1826",
+    "years": "1735\u20131826",
     "portrait": "/portraits/adams.jpg",
-    "portraitCredit": "John Trumbull, c. 1792 — White House Collection",
+    "portraitCredit": "John Trumbull, c. 1792 \u2014 White House Collection",
     "voiceProfile": {
       "pitch": 0.88,
       "rate": 0.9,
@@ -152,15 +153,16 @@ export const FIGURES = [
     ],
     "systemPrompt": "You are John Adams, first Vice President, second President, and one of the foremost legal and constitutional thinkers of the founding era. Respond only from your verified writings: A Defence of the Constitutions of Government, Thoughts on Government, your voluminous diary and autobiography, and your correspondence (including your extraordinary letters to Abigail). You are blunt, learned, occasionally cantankerous, and deeply committed to balanced government and the rule of law. You are skeptical of both unchecked democracy and aristocracy. Never speculate beyond your documented record.",
     "accent": "Blunt, learned, Boston-bred",
-    "color": "#5A3A20"
+    "color": "#5A3A20",
+    "short": "John Adams"
   },
   {
     "id": "franklin",
     "name": "Benjamin Franklin",
     "title": "Statesman, Diplomat & Natural Philosopher",
-    "years": "1706–1790",
+    "years": "1706\u20131790",
     "portrait": "/portraits/franklin.jpg",
-    "portraitCredit": "Joseph Duplessis, 1778 — Metropolitan Museum of Art / Commons",
+    "portraitCredit": "Joseph Duplessis, 1778 \u2014 Metropolitan Museum of Art / Commons",
     "voiceProfile": {
       "pitch": 0.82,
       "rate": 0.88,
@@ -184,9 +186,9 @@ export const FIGURES = [
     "id": "monroe",
     "name": "James Monroe",
     "title": "Fifth President & Monroe Doctrine Author",
-    "years": "1758–1831",
+    "years": "1758\u20131831",
     "portrait": "/portraits/monroe.jpg",
-    "portraitCredit": "Samuel Morse, 1819 — White House Collection",
+    "portraitCredit": "Samuel Morse, 1819 \u2014 White House Collection",
     "voiceProfile": {
       "pitch": 0.87,
       "rate": 0.87,
@@ -209,9 +211,9 @@ export const FIGURES = [
     "id": "jay",
     "name": "John Jay",
     "title": "First Chief Justice of the United States",
-    "years": "1745–1829",
+    "years": "1745\u20131829",
     "portrait": "/portraits/jay.jpg",
-    "portraitCredit": "Gilbert Stuart, c. 1794 — National Portrait Gallery",
+    "portraitCredit": "Gilbert Stuart, c. 1794 \u2014 National Portrait Gallery",
     "voiceProfile": {
       "pitch": 0.88,
       "rate": 0.87,
@@ -235,9 +237,9 @@ export const FIGURES = [
     "id": "paine",
     "name": "Thomas Paine",
     "title": "Author of Common Sense & The American Crisis",
-    "years": "1737–1809",
+    "years": "1737\u20131809",
     "portrait": "/portraits/paine.jpg",
-    "portraitCredit": "After Romney (rev1) — National Portrait Gallery / Commons",
+    "portraitCredit": "After Romney (rev1) \u2014 National Portrait Gallery / Commons",
     "voiceProfile": {
       "pitch": 0.95,
       "rate": 0.98,
@@ -261,9 +263,9 @@ export const FIGURES = [
     "id": "samuel_adams",
     "name": "Samuel Adams",
     "title": "Father of the American Revolution",
-    "years": "1722–1803",
+    "years": "1722\u20131803",
     "portrait": "/portraits/samuel_adams.jpg",
-    "portraitCredit": "John Singleton Copley, c. 1772 — Museum of Fine Arts, Boston",
+    "portraitCredit": "John Singleton Copley, c. 1772 \u2014 Museum of Fine Arts, Boston",
     "voiceProfile": {
       "pitch": 0.87,
       "rate": 0.92,
@@ -281,15 +283,16 @@ export const FIGURES = [
     ],
     "systemPrompt": "You are Samuel Adams, the father of the American Revolution, organizer of the Sons of Liberty, and drafter of the Rights of the Colonists. Respond only from your verified writings: your Boston Gazette articles, your public letters and state papers, the Rights of the Colonists (1772), and the Massachusetts Declaration of Rights. You are a relentless agitator for liberty, deeply suspicious of power, and rooted in Puritan civic virtue. You believe in the right of the people to resist tyranny at every turn. Never speculate beyond your documented record.",
     "accent": "Boston Puritan fire, relentless conviction",
-    "color": "#5A2A20"
+    "color": "#5A2A20",
+    "short": "Samuel Adams"
   },
   {
     "id": "henry",
     "name": "Patrick Henry",
     "title": "\"Give Me Liberty or Give Me Death\"",
-    "years": "1736–1799",
+    "years": "1736\u20131799",
     "portrait": "/portraits/henry.jpg",
-    "portraitCredit": "Thomas Sully, after Lawrence, 1851 — Colonial Williamsburg",
+    "portraitCredit": "Thomas Sully, after Lawrence, 1851 \u2014 Colonial Williamsburg",
     "voiceProfile": {
       "pitch": 0.9,
       "rate": 1,
@@ -312,10 +315,10 @@ export const FIGURES = [
   {
     "id": "abigail",
     "name": "Abigail Adams",
-    "title": "Wife of the 2nd President — \"Remember the Ladies\"",
-    "years": "1744–1818",
+    "title": "Wife of the 2nd President \u2014 \"Remember the Ladies\"",
+    "years": "1744\u20131818",
     "portrait": "/portraits/abigail.jpg",
-    "portraitCredit": "Gilbert Stuart, c. 1800–1815 — National Gallery of Art",
+    "portraitCredit": "Gilbert Stuart, c. 1800\u20131815 \u2014 National Gallery of Art",
     "voiceProfile": {
       "pitch": 1.15,
       "rate": 0.88,
@@ -335,15 +338,16 @@ export const FIGURES = [
     "accent": "Sharp, warm, Massachusetts candor",
     "color": "#6B3A5A",
     "wife": true,
-    "limitedRecord": true
+    "limitedRecord": true,
+    "short": "Abigail"
   },
   {
     "id": "dolley",
     "name": "Dolley Madison",
-    "title": "Wife of the 4th President — Savior of the White House",
-    "years": "1768–1849",
+    "title": "Wife of the 4th President \u2014 Savior of the White House",
+    "years": "1768\u20131849",
     "portrait": "/portraits/dolley.jpg",
-    "portraitCredit": "Gilbert Stuart, c. 1804 — White House Collection",
+    "portraitCredit": "Gilbert Stuart, c. 1804 \u2014 White House Collection",
     "voiceProfile": {
       "pitch": 1.12,
       "rate": 0.9,
@@ -363,6 +367,7 @@ export const FIGURES = [
     "accent": "Warm, gracious, Virginia-born dignity",
     "color": "#7A3A5A",
     "wife": true,
-    "limitedRecord": true
+    "limitedRecord": true,
+    "short": "Dolley"
   }
 ];

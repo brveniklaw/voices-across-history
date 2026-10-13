@@ -72,7 +72,8 @@ function speakText(text, voiceProfile = {}, onEnd) {
 }
 const stopSpeech = () => window.speechSynthesis && window.speechSynthesis.cancel();
 
-const initials = (name) => name.replace(/[^A-Za-z &]/g, "").split(/\s+/).filter((w) => w && w !== "&").map((w) => w[0]).slice(0, 2).join("");
+const initials = (name) => { const w = name.replace(/[^A-Za-z ]/g, " ").split(/\s+/).filter((x) => /^[A-Z]/.test(x)); return w.length > 1 ? w[0][0] + w[w.length - 1][0] : (w[0] || "?")[0]; };
+const speakerName = (f) => f.short || f.name.split(" / ")[0].split(" ").slice(-1)[0];
 
 function daysLeft(iso) {
   if (!iso) return null;
@@ -93,7 +94,6 @@ async function api(path, { method = "GET", body, token } = {}) {
 // ── MAIN ──────────────────────────────────────────────────────────────────────
 export default function VoicesApp({ collection: C, figures }) {
   const T = C.theme;
-  const S = makeStyles(T);
   const isMobile = useMobile();
 
   const [view, setView] = useState("landing"); // landing | auth | join | gallery | chat
@@ -298,126 +298,135 @@ export default function VoicesApp({ collection: C, figures }) {
   }, []);
   const stopListening = useCallback(() => { recogRef.current?.stop(); setListening(false); }, []);
 
-  // ── ACCOUNT BAR ─────────────────────────────────────────────────────────────
-  const AccountBar = () =>
+  // ── SHARED PIECES ───────────────────────────────────────────────────────────
+  const vars = {
+    "--ink": T.ink, "--deep": T.deep, "--raise": T.raise, "--paper": T.paper, "--muted": T.muted,
+    "--faint": T.faint, "--accent": T.accent, "--accent-soft": T.accentSoft, "--signal": T.signal, "--line": T.line,
+  };
+  const account = () =>
     session ? (
-      <div style={S.accountBar}>
-        <span style={{ opacity: 0.75 }}>{session.user.email}</span>
-        <button onClick={signOut} style={S.linkBtn}>Sign out</button>
+      <div className="vx-account">
+        <span className="vx-account-email">{session.user.email}</span>
+        <button className="vx-link" onClick={signOut}>Sign out</button>
       </div>
     ) : null;
 
   // ── VIEW: LANDING ───────────────────────────────────────────────────────────
   if (view === "landing") {
     const trialDays = access?.active && (access.access_type === "trial" || access.access_type === "promo_trial") ? daysLeft(access.trial_expires_at) : null;
+    const plates = figures.slice(0, isMobile ? 6 : 9);
     return (
-      <div style={S.landing}>
-        <div style={S.noise} />
-        <div style={{ ...S.landingInner, padding: isMobile ? "2rem 1.4rem" : "2rem" }}>
-          <div style={S.eyebrow}>Voices Across History™</div>
-          <h1 style={{ ...S.title, fontSize: isMobile ? "clamp(2.3rem,10vw,3.4rem)" : "clamp(3rem,7vw,5.2rem)" }}>
-            {C.titleTop}<br /><span style={{ color: T.accentLt }}>{C.titleBottom}</span>
-          </h1>
-          <div style={S.rule} />
-          <p style={{ ...S.desc, fontSize: isMobile ? "1.05rem" : "clamp(1.1rem,2vw,1.3rem)" }}>{C.description}</p>
-          <div style={S.meta}>{C.meta.map((m, i) => <span key={m}>{i > 0 && <span style={{ margin: "0 0.6rem", opacity: 0.4 }}>·</span>}{m}</span>)}</div>
-          {notice && <div style={S.noticeOk}>{notice}</div>}
-          <button onClick={enter} disabled={checking} style={{ ...S.primaryBtn, minHeight: 48 }}>
-            {checking ? "One moment…" : access?.active ? C.enterLabel : session ? "Continue" : "Start Free — 7 Days on Us"}
-          </button>
-          <div style={{ marginTop: "1.4rem" }}>
-            <div style={S.price}>$9.99<span style={S.priceUnit}> / month — the whole platform</span></div>
-            <div style={S.small}>One membership opens every collection: Republic, Philosophers and Inventors.</div>
-            {trialDays !== null && <div style={S.trialTag}>FREE TRIAL — {trialDays} day{trialDays === 1 ? "" : "s"} remaining</div>}
-            {access?.staff && <div style={S.trialTag}>INTEXIAU STAFF ACCESS</div>}
-          </div>
-          {!session && !checking && (
-            <button onClick={() => { setMode("signin"); setView("auth"); }} style={{ ...S.linkBtn, marginTop: "1rem" }}>
-              Already a member? Sign in
-            </button>
-          )}
-          <AccountBar />
-          <a href={`${HUB}/`} style={S.backLink}>← Voices Across History™ Platform</a>
-        </div>
-      </div>
+      <Shell vars={vars} className="vx-landing">
+        <TopBar right={session ? account() : !checking && <button className="vx-link" onClick={() => { setMode("signin"); setView("auth"); }}>Sign in</button>} />
+        <main className="vx-hero">
+          <section className="vx-hero-copy">
+            <p className="vx-kicker">{C.kicker || "A Voices Across History collection"}</p>
+            <h1 className="vx-title">{C.titleBottom}</h1>
+            <p className="vx-lede">{C.description}</p>
+            <dl className="vx-facts">
+              <div><dt>{figures.length}</dt><dd>{C.countLabel || "voices"}</dd></div>
+              <div><dt>{figures.reduce((n, f) => n + f.primarySources.length, 0)}</dt><dd>primary sources</dd></div>
+              <div><dt>Voice</dt><dd>speak or type</dd></div>
+            </dl>
+            {notice && <div className="vx-note vx-note-ok">{notice}</div>}
+            <div className="vx-cta-row">
+              <button className="vx-btn" onClick={enter} disabled={checking}>
+                {checking ? "One moment…" : access?.active ? C.enterLabel : session ? "Continue" : "Start your free 7-day trial"}
+              </button>
+              <p className="vx-price"><strong>$9.99 a month</strong> for every collection: Republic, Philosophers and Inventors.</p>
+            </div>
+            {trialDays !== null && <p className="vx-status">Free trial: {trialDays} day{trialDays === 1 ? "" : "s"} left</p>}
+            {access?.staff && <p className="vx-status">IntexiaU staff access</p>}
+          </section>
+          <section className="vx-mosaic" aria-label={`Figures in ${C.name}`}>
+            {plates.map((f, i) => (
+              <div key={f.id} className="vx-mosaic-cell" style={{ animationDelay: `${i * 70}ms` }}>
+                <Plate f={f} />
+                <span className="vx-mosaic-name">{f.short || f.name}</span>
+              </div>
+            ))}
+          </section>
+        </main>
+        <footer className="vx-foot">
+          {(C.otherCollections || []).map((o) => <a key={o.href} href={o.href} className="vx-link">{o.label}</a>)}
+        </footer>
+      </Shell>
     );
   }
 
   // ── VIEW: AUTH ──────────────────────────────────────────────────────────────
   if (view === "auth") {
-    const titles = { signup: "Create your free account", signin: "Welcome back", reset: "Reset your password", newpass: "Choose a new password" };
+    const titles = { signup: "Create your free account", signin: "Sign in", reset: "Reset your password", newpass: "Choose a new password" };
+    const notes = {
+      signup: "One IntexiaU account works in every Voices collection and in the IntexiaU Academy.",
+      signin: "Use the email and password from your IntexiaU account.",
+      reset: "Enter your email and we'll send a reset link.",
+      newpass: "Enter a new password for your account.",
+    };
     return (
-      <div style={{ ...S.landing, justifyContent: "center" }}>
-        <div style={S.noise} />
-        <form onSubmit={submitAuth} style={S.formCard}>
-          <div style={S.eyebrow}>{C.name}</div>
-          <h2 style={S.formTitle}>{titles[mode]}</h2>
-          <div style={S.rule} />
+      <Shell vars={vars} className="vx-center">
+        <TopBar left={<button className="vx-link" onClick={() => setView("landing")}>Back</button>} />
+        <form className="vx-panel" onSubmit={submitAuth}>
+          <p className="vx-kicker">{C.name}</p>
+          <h2 className="vx-h2">{titles[mode]}</h2>
           {(mode === "signup" || mode === "signin") && (
-            <div style={S.tabs}>
-              <button type="button" onClick={() => { setMode("signup"); setAuthErr(""); setAuthOk(""); }} style={mode === "signup" ? S.tabOn : S.tab}>Create account</button>
-              <button type="button" onClick={() => { setMode("signin"); setAuthErr(""); setAuthOk(""); }} style={mode === "signin" ? S.tabOn : S.tab}>Sign in</button>
+            <div className="vx-seg" role="tablist">
+              <button type="button" role="tab" aria-selected={mode === "signup"} onClick={() => { setMode("signup"); setAuthErr(""); setAuthOk(""); }}>Create account</button>
+              <button type="button" role="tab" aria-selected={mode === "signin"} onClick={() => { setMode("signin"); setAuthErr(""); setAuthOk(""); }}>Sign in</button>
             </div>
           )}
-          <p style={S.formNote}>
-            {mode === "signup" && "One IntexiaU account works across every Voices collection and the IntexiaU Academy."}
-            {mode === "signin" && "Use the email and password from your IntexiaU account."}
-            {mode === "reset" && "Enter your email and we'll send a reset link."}
-            {mode === "newpass" && "Enter a new password for your account."}
-          </p>
-          {mode === "signup" && <input style={S.input} placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required />}
-          {mode !== "newpass" && <input style={S.input} type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />}
-          {mode !== "reset" && <input style={S.input} type="password" placeholder="Password (8+ characters)" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required />}
-          {authErr && <div style={S.err}>{authErr}</div>}
-          {authOk && <div style={S.noticeOk}>{authOk}</div>}
-          <button disabled={authBusy} style={{ ...S.primaryBtn, width: "100%", minHeight: 50 }}>
+          <p className="vx-muted">{notes[mode]}</p>
+          {mode === "signup" && <label className="vx-field"><span>Your name</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required /></label>}
+          {mode !== "newpass" && <label className="vx-field"><span>Email</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>}
+          {mode !== "reset" && <label className="vx-field"><span>Password</span><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required placeholder="At least 8 characters" /></label>}
+          {authErr && <div className="vx-note vx-note-err">{authErr}</div>}
+          {authOk && <div className="vx-note vx-note-ok">{authOk}</div>}
+          <button className="vx-btn vx-btn-wide" disabled={authBusy}>
             {authBusy ? "Please wait…" : { signup: "Create account", signin: "Sign in", reset: "Send reset link", newpass: "Save new password" }[mode]}
           </button>
           {mode !== "newpass" && (
-            <button type="button" onClick={() => { setMode(mode === "reset" ? "signin" : "reset"); setAuthErr(""); setAuthOk(""); }} style={{ ...S.linkBtn, marginTop: "1rem" }}>
+            <button type="button" className="vx-link vx-center-text" onClick={() => { setMode(mode === "reset" ? "signin" : "reset"); setAuthErr(""); setAuthOk(""); }}>
               {mode === "reset" ? "Back to sign in" : "Forgot your password?"}
             </button>
           )}
-          <p style={S.fine}>By creating an account you agree to the IntexiaU <a href="https://academy.intexiau.com/terms" style={S.fineLink}>Terms</a> and <a href="https://academy.intexiau.com/privacy" style={S.fineLink}>Privacy Policy</a>. You must be 16 or older.</p>
-          <button type="button" onClick={() => setView("landing")} style={{ ...S.backLink, background: "none", border: "none", cursor: "pointer", display: "block", margin: "1.2rem auto 0" }}>← Back</button>
+          <p className="vx-fine">By creating an account you agree to the IntexiaU <a href="https://academy.intexiau.com/terms">Terms</a> and <a href="https://academy.intexiau.com/privacy">Privacy Policy</a>. You must be 16 or older.</p>
         </form>
-      </div>
+      </Shell>
     );
   }
 
-  // ── VIEW: JOIN (signed in, no active membership) ────────────────────────────
+  // ── VIEW: JOIN ──────────────────────────────────────────────────────────────
   if (view === "join") {
     const ended = access && !access.is_new && !access.active;
     return (
-      <div style={{ ...S.landing, justifyContent: "center" }}>
-        <div style={S.noise} />
-        <div style={S.formCard}>
-          <div style={S.eyebrow}>{C.name}</div>
-          <h2 style={S.formTitle}>{ended ? "Your access has ended" : "Start your free 7-day trial"}</h2>
-          <div style={S.rule} />
-          <p style={S.formNote}>
+      <Shell vars={vars} className="vx-center">
+        <TopBar left={<button className="vx-link" onClick={() => setView("landing")}>Back</button>} right={account()} />
+        <div className="vx-panel">
+          <p className="vx-kicker">{C.name}</p>
+          <h2 className="vx-h2">{ended ? "Your access has ended" : "Start your free 7-day trial"}</h2>
+          <p className="vx-muted">
             {ended
-              ? "Continue your conversations for $9.99 a month. One membership opens every collection. Cancel anytime."
-              : "Add a card to begin — $0 today, then $9.99/month for the whole Voices Across History platform. Cancel anytime."}
+              ? "Continue your conversations for $9.99 a month. One membership opens every collection, and you can cancel anytime."
+              : "Add a card to begin. You pay nothing today, then $9.99 a month for the whole platform. Cancel anytime."}
           </p>
-          <div style={{ ...S.price, fontSize: "2.4rem", margin: "0.6rem 0 0.2rem" }}>$9.99<span style={S.priceUnit}>/mo</span></div>
-          <div style={{ ...S.small, marginBottom: "1.2rem" }}>EVERY COLLECTION · CANCEL ANYTIME</div>
-          {joinErr && <div style={S.err}>{joinErr}</div>}
-          <button onClick={startMembership} disabled={joinBusy} style={{ ...S.primaryBtn, width: "100%", minHeight: 50 }}>
-            {joinBusy ? "Opening secure checkout…" : ended ? "Subscribe — $9.99 / month" : "Begin 7-Day Free Trial"}
+          <div className="vx-pricecard">
+            <span className="vx-pricecard-amt">$9.99</span>
+            <span className="vx-pricecard-per">per month, every collection</span>
+          </div>
+          {joinErr && <div className="vx-note vx-note-err">{joinErr}</div>}
+          <button className="vx-btn vx-btn-wide" onClick={startMembership} disabled={joinBusy}>
+            {joinBusy ? "Opening secure checkout…" : ended ? "Subscribe for $9.99 a month" : "Start free trial"}
           </button>
           {!showPromo ? (
-            <button onClick={() => setShowPromo(true)} style={{ ...S.linkBtn, marginTop: "1rem" }}>Have a promo code?</button>
+            <button className="vx-link vx-center-text" onClick={() => setShowPromo(true)}>Have a promo code?</button>
           ) : (
-            <form onSubmit={redeem} style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
-              <input style={{ ...S.input, marginBottom: 0, flex: 1, textTransform: "uppercase", letterSpacing: "0.08em" }} placeholder="VAH-XXXX-XXXX" value={promo} onChange={(e) => setPromo(e.target.value.toUpperCase())} />
-              <button disabled={joinBusy} style={{ ...S.secondaryBtn, minHeight: 46 }}>Apply</button>
+            <form className="vx-inline" onSubmit={redeem}>
+              <input aria-label="Promo code" placeholder="Promo code" value={promo} onChange={(e) => setPromo(e.target.value.toUpperCase())} />
+              <button className="vx-btn vx-btn-quiet" disabled={joinBusy}>Apply</button>
             </form>
           )}
-          <AccountBar />
-          <button onClick={() => setView("landing")} style={{ ...S.backLink, background: "none", border: "none", cursor: "pointer", display: "block", margin: "1.2rem auto 0" }}>← Back</button>
         </div>
-      </div>
+      </Shell>
     );
   }
 
@@ -425,220 +434,316 @@ export default function VoicesApp({ collection: C, figures }) {
   if (view === "gallery") {
     const filters = C.filterBy ? ["All", ...Array.from(new Set(figures.map((f) => f[C.filterBy])))] : null;
     const shown = filters && filter !== "All" ? figures.filter((f) => f[C.filterBy] === filter) : figures;
-    const sections = C.sections || [{ label: C.sectionLabel || "The Collection", match: () => true }];
+    const sections = C.sections || [{ label: C.sectionLabel || "The collection", match: () => true }];
     return (
-      <div style={S.page}>
-        <div style={S.header}>
-          <button onClick={() => setView("landing")} style={S.ghostBtn}>← Hall</button>
-          <div style={{ textAlign: "center" }}>
-            <div style={S.headerEyebrow}>Voices Across History™</div>
-            <h1 style={{ ...S.headerTitle, fontSize: isMobile ? "1.05rem" : "1.35rem" }}>{C.name}</h1>
-          </div>
-          <button onClick={signOut} style={S.ghostBtn}>Sign out</button>
-        </div>
-        {notice && <div style={{ ...S.noticeOk, margin: "1rem 1.5rem 0" }}>{notice}</div>}
-        {filters && (
-          <div style={S.filters}>
-            {filters.map((f) => (
-              <button key={f} onClick={() => setFilter(f)} style={filter === f ? S.filterOn : S.filter}>{f}</button>
-            ))}
-          </div>
-        )}
-        {sections.map((sec) => {
-          const list = shown.filter(sec.match);
-          if (!list.length) return null;
-          return (
-            <div key={sec.label}>
-              <div style={S.sectionLabel}>{sec.label}{sec.note && <span style={S.sectionNote}> — {sec.note}</span>}</div>
-              <div style={{ ...S.grid, gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fill,minmax(200px,1fr))" }}>
-                {list.map((f) => <FigureCard key={f.id} f={f} onClick={() => openFigure(f)} S={S} isMobile={isMobile} badge={sec.badge} />)}
+      <Shell vars={vars}>
+        <TopBar left={<button className="vx-link" onClick={() => setView("landing")}>{C.titleBottom}</button>} right={account()} />
+        <main className="vx-gallery">
+          <div className="vx-gallery-head">
+            <h1 className="vx-h1">Choose a voice</h1>
+            <p className="vx-muted">Every answer is grounded in the figure's own writings. Tap a portrait to begin.</p>
+            {notice && <div className="vx-note vx-note-ok">{notice}</div>}
+            {filters && (
+              <div className="vx-chips" role="group" aria-label="Filter by era">
+                {filters.map((f) => <button key={f} aria-pressed={filter === f} onClick={() => setFilter(f)}>{f}</button>)}
               </div>
-            </div>
-          );
-        })}
-        <div style={S.crossLinks}>
-          {(C.otherCollections || []).map((o) => (
-            <a key={o.href} href={o.href} style={S.crossLink}>{o.label} →</a>
-          ))}
-        </div>
-      </div>
+            )}
+          </div>
+          {sections.map((sec) => {
+            const list = shown.filter(sec.match);
+            if (!list.length) return null;
+            return (
+              <section key={sec.label} className="vx-section">
+                {sections.length > 1 && <h2 className="vx-section-title">{sec.label}{sec.note && <span> {sec.note}</span>}</h2>}
+                <div className="vx-grid">
+                  {list.map((f) => (
+                    <button key={f.id} className="vx-card" onClick={() => openFigure(f)} style={{ "--tint": f.color }}>
+                      <Plate f={f} />
+                      <span className="vx-card-body">
+                        <span className="vx-card-name">{f.name}</span>
+                        <span className="vx-card-title">{f.title}</span>
+                        <span className="vx-card-meta"><span>{f.years}</span><span>{f.primarySources.length} sources</span></span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </main>
+        <footer className="vx-foot">
+          {(C.otherCollections || []).map((o) => <a key={o.href} href={o.href} className="vx-link">{o.label}</a>)}
+        </footer>
+      </Shell>
     );
   }
 
   // ── VIEW: CHAT ──────────────────────────────────────────────────────────────
   if (view === "chat" && active) {
+    const who = speakerName(active);
+    const live = loading || speaking;
     return (
-      <div style={{ ...S.chatPage, maxWidth: isMobile ? "100%" : 820 }}>
-        <div style={S.chatHeader}>
-          <button onClick={() => { stopSpeech(); setView("gallery"); }} style={S.ghostBtn}>← Gallery</button>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", flex: 1, minWidth: 0 }}>
-            <Portrait f={active} size={isMobile ? 40 : 52} round S={S} />
-            <div style={{ minWidth: 0 }}>
-              <div style={S.chatName}>{active.name}</div>
-              <div style={S.chatTitle}>{active.title}</div>
-              {!isMobile && <div style={S.chatYears}>{active.years}</div>}
+      <Shell vars={vars} className="vx-chat">
+        <TopBar left={<button className="vx-link" onClick={() => { stopSpeech(); setView("gallery"); }}>All voices</button>} right={account()} />
+        <div className="vx-chat-wrap">
+          <aside className="vx-dossier">
+            <Plate f={active} />
+            <div className="vx-dossier-body">
+              <h1 className="vx-dossier-name">{active.name}</h1>
+              <p className="vx-dossier-title">{active.title}</p>
+              <p className="vx-dossier-years">{active.years}</p>
+              <h2 className="vx-dossier-h">Draws on</h2>
+              <ul className="vx-sources">{active.primarySources.map((s) => <li key={s}>{s}</li>)}</ul>
+              {active.portraitCredit && <p className="vx-credit">Portrait: {active.portraitCredit}</p>}
             </div>
-          </div>
-          <div style={{ flexShrink: 0, color: T.accentLt }}>{speaking ? "🔊" : ""}</div>
-        </div>
-        <div style={S.sourcesBar}>
-          <span style={S.sourcesLabel}>Sources:</span>
-          {active.primarySources.map((s) => <span key={s} style={S.sourceTag}>{s}</span>)}
-        </div>
-        <div style={S.messages}>
-          {messages.map((m, i) => (
-            <div key={i} style={m.role === "user" ? { ...S.userBubble, maxWidth: isMobile ? "88%" : "75%" } : { ...S.botBubble, maxWidth: isMobile ? "94%" : "85%", opacity: m.system ? 0.8 : 1 }}>
-              {m.role === "assistant" && <div style={S.speaker}>{active.short || active.name.split(" ")[0]}</div>}
-              <div style={{ ...S.bubbleText, whiteSpace: "pre-wrap" }}>{m.text}</div>
-              {m.role === "assistant" && !m.system && (
-                <button onClick={() => { setSpeaking(true); speakText(m.text, active.voiceProfile, () => setSpeaking(false)); }} style={S.replay} title="Read aloud" aria-label="Read aloud">🔊</button>
+          </aside>
+          <section className="vx-convo" aria-label={`Conversation with ${active.name}`}>
+            <div className={`vx-voiceprint ${live ? "is-live" : ""}`} aria-hidden="true">
+              {Array.from({ length: 64 }).map((_, i) => <span key={i} style={{ animationDelay: `${(i * 53) % 900}ms` }} />)}
+            </div>
+            <p className="vx-live-label" aria-live="polite">{loading ? `${who} is considering your question…` : speaking ? `${who} is speaking` : " "}</p>
+            <div className="vx-transcript">
+              {messages.map((m, i) =>
+                m.role === "user" ? (
+                  <div key={i} className="vx-q"><p>{m.text}</p></div>
+                ) : (
+                  <div key={i} className={`vx-a ${m.system ? "is-system" : ""}`}>
+                    <div className="vx-a-head">
+                      <span className="vx-a-who">{who}</span>
+                      {!m.system && (
+                        <button className="vx-icon" onClick={() => { setSpeaking(true); speakText(m.text, active.voiceProfile, () => setSpeaking(false)); }} aria-label="Read aloud" title="Read aloud">
+                          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round"/></svg>
+                        </button>
+                      )}
+                    </div>
+                    <p className="vx-a-text">{m.text}</p>
+                  </div>
+                )
               )}
+              {loading && <div className="vx-a"><div className="vx-a-head"><span className="vx-a-who">{who}</span></div><div className="vx-dots"><span /><span /><span /></div></div>}
+              <div ref={endRef} />
             </div>
-          ))}
-          {loading && (
-            <div style={S.botBubble}>
-              <div style={S.speaker}>{active.short || active.name.split(" ")[0]}</div>
-              <div className="typing"><span /><span /><span /></div>
+            <div className="vx-composer">
+              <button
+                className={`vx-mic ${listening ? "is-on" : ""}`}
+                onMouseDown={startListening} onMouseUp={stopListening} onTouchStart={startListening} onTouchEnd={stopListening}
+                aria-label={listening ? "Listening" : "Hold to speak"} title={listening ? "Listening…" : "Hold to speak"}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round"/></svg>
+              </button>
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
+                placeholder={`Ask ${who} a question`}
+                rows={2}
+                aria-label={`Ask ${who} a question`}
+              />
+              <button className="vx-btn vx-send" onClick={() => send(input)} disabled={loading || !input.trim()}>Ask</button>
             </div>
-          )}
-          <div ref={endRef} />
+            <p className="vx-fine vx-center-text">
+              An AI interpretation for learning, grounded in the documented writings of {active.name}. Not the person, and not a direct quotation unless cited.
+              {active.limitedRecord && " Limited record: answers stay within verified writings."}
+            </p>
+          </section>
         </div>
-        <div style={{ ...S.inputRow, padding: isMobile ? "0.8rem 1rem" : "1rem 1.5rem" }}>
-          <button
-            onMouseDown={startListening} onMouseUp={stopListening} onTouchStart={startListening} onTouchEnd={stopListening}
-            style={{ ...S.mic, background: listening ? "#8B1A1A" : T.accentAlpha }}
-            title={listening ? "Listening…" : "Hold to speak"} aria-label="Hold to speak"
-          >{listening ? "🔴" : "🎙️"}</button>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-            placeholder={`Ask ${active.short || active.name.split(" ")[0]}…`}
-            style={S.textarea}
-            rows={2}
-          />
-          <button onClick={() => send(input)} disabled={loading || !input.trim()} style={{ ...S.primaryBtn, padding: "0.6rem 1.1rem", minHeight: 44, boxShadow: "none" }}>Send</button>
-        </div>
-        <div style={S.disclaimer}>
-          An AI interpretation for learning, grounded in the documented writings of {active.name} ({active.years}). Not the person, and not a verbatim quotation unless cited.
-          {active.limitedRecord && " Limited record — responses restricted to verified writings only."}
-        </div>
-      </div>
+      </Shell>
     );
   }
   return null;
 }
 
-// ── PORTRAITS & CARDS ─────────────────────────────────────────────────────────
-function Portrait({ f, size, round, S, height }) {
-  const [failed, setFailed] = useState(!f.portrait);
-  const src = f.portrait && !/^https?:/.test(f.portrait) ? `${BASE}${f.portrait.replace(/^\//, "")}` : f.portrait;
-  const box = round
-    ? { width: size, height: size, borderRadius: "50%", flexShrink: 0, overflow: "hidden", border: `2px solid ${S._t.border}` }
-    : { width: "100%", height, overflow: "hidden" };
-  if (failed) {
-    return (
-      <div style={{ ...box, display: "flex", alignItems: "center", justifyContent: "center", background: `radial-gradient(circle at 50% 40%, ${f.color}66, ${f.color}22 70%)` }}>
-        <span style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, fontSize: round ? size * 0.38 : 44, color: S._t.accentLt, letterSpacing: "0.04em" }}>
-          {f.icon && !round ? <span style={{ display: "block", textAlign: "center", fontSize: 30, marginBottom: 4 }}>{f.icon}</span> : null}
-          {initials(f.name)}
-        </span>
-      </div>
-    );
-  }
+// ── LAYOUT PIECES (module level so inputs keep focus between renders) ────────
+function Shell({ vars, className = "", children }) {
   return (
-    <div style={box}>
-      <img src={src} alt={f.name} onError={() => setFailed(true)} referrerPolicy="no-referrer" loading="lazy"
-        style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", filter: "sepia(18%) contrast(1.05)" }} />
+    <div className={`vx ${className}`} style={vars}>
+      <style>{CSS}</style>
+      {children}
     </div>
   );
 }
 
-function FigureCard({ f, onClick, S, isMobile, badge }) {
+function TopBar({ left, right }) {
   return (
-    <button onClick={onClick} style={{ ...S.card, borderColor: `${f.color}66` }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.4)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}>
-      <Portrait f={f} S={S} height={isMobile ? 160 : 220} />
-      <div style={{ padding: "0.8rem", textAlign: "left" }}>
-        <div style={{ ...S.cardName, fontSize: isMobile ? "0.78rem" : "0.86rem" }}>{f.name}</div>
-        <div style={S.cardSub}>{f.title}</div>
-        <div style={S.cardYears}>{f.years}</div>
-        {badge && <div style={S.badge}>{badge}</div>}
-      </div>
-    </button>
+    <header className="vx-top">
+      <div className="vx-top-l">{left}</div>
+      <a className="vx-brand" href={`${HUB}/`}>Voices Across History<sup>™</sup></a>
+      <div className="vx-top-r">{right}</div>
+    </header>
+  );
+}
+
+// ── PORTRAIT PLATE ────────────────────────────────────────────────────────────
+// Archival portraits rendered as tinted, engraved plates; a monogram plate if no image loads.
+function Plate({ f }) {
+  const [failed, setFailed] = useState(!f.portrait);
+  const src = f.portrait && !/^https?:/.test(f.portrait) ? `${BASE}${f.portrait.replace(/^\//, "")}` : f.portrait;
+  return (
+    <span className={`vx-plate ${failed ? "" : "has-img"}`} style={{ "--tint": f.color }}>
+      {failed ? (
+        <span className="vx-plate-mono">{f.monogram || initials(f.name)}</span>
+      ) : (
+        <img src={src} alt={f.name} onError={() => setFailed(true)} referrerPolicy="no-referrer" loading="lazy" />
+      )}
+      <span className="vx-plate-engrave" aria-hidden="true" />
+    </span>
   );
 }
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
-function makeStyles(T) {
-  const cinzel = "'Cinzel',serif";
-  const garamond = "'EB Garamond',Georgia,serif";
-  return {
-    _t: T,
-    landing: { minHeight: "100vh", background: T.bgGrad, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", fontFamily: "'Crimson Text',Georgia,serif", position: "relative", overflow: "hidden", color: T.text },
-    noise: { position: "absolute", inset: 0, pointerEvents: "none", backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")` },
-    landingInner: { position: "relative", zIndex: 2, maxWidth: 720 },
-    eyebrow: { fontFamily: cinzel, fontSize: "0.65rem", letterSpacing: "0.35em", color: T.accent, marginBottom: "1rem", textTransform: "uppercase" },
-    title: { fontFamily: cinzel, fontWeight: 900, color: T.text, lineHeight: 1.05, margin: "0 0 1rem", textShadow: `0 2px 40px ${T.accentAlpha}` },
-    rule: { width: 80, height: 1, background: `linear-gradient(90deg,transparent,${T.accent},transparent)`, margin: "1.4rem auto" },
-    desc: { fontFamily: garamond, fontStyle: "italic", color: T.muted, lineHeight: 1.7, margin: "0 auto 1.4rem", maxWidth: 600 },
-    meta: { fontFamily: cinzel, fontSize: "0.65rem", letterSpacing: "0.15em", color: T.accent, marginBottom: "2rem", display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.3rem 0" },
-    primaryBtn: { fontFamily: cinzel, fontSize: "0.8rem", letterSpacing: "0.14em", padding: "0.9rem 2.4rem", background: T.btn, color: T.btnText || T.text, border: "none", borderRadius: 2, cursor: "pointer", boxShadow: `0 4px 20px ${T.accentAlpha}` },
-    secondaryBtn: { fontFamily: cinzel, fontSize: "0.68rem", letterSpacing: "0.1em", padding: "0.6rem 1rem", background: T.accentAlpha, border: `1px solid ${T.border}`, color: T.accentLt, cursor: "pointer", borderRadius: 2 },
-    ghostBtn: { fontFamily: cinzel, fontSize: "0.68rem", letterSpacing: "0.1em", background: "transparent", border: `1px solid ${T.border}`, color: T.accentLt, padding: "0.45rem 0.9rem", cursor: "pointer", borderRadius: 2, minHeight: 40 },
-    linkBtn: { background: "none", border: "none", cursor: "pointer", fontFamily: garamond, fontStyle: "italic", fontSize: "0.95rem", color: T.accentLt, textDecoration: "underline", padding: 0, display: "inline-block" },
-    backLink: { fontFamily: cinzel, fontSize: "0.65rem", letterSpacing: "0.1em", color: T.accent, opacity: 0.7, textDecoration: "none", display: "inline-block", marginTop: "1.6rem" },
-    price: { fontFamily: cinzel, fontSize: "1.3rem", color: T.accentLt, letterSpacing: "0.05em" },
-    priceUnit: { fontSize: "0.6em", color: T.accent, letterSpacing: "0.12em" },
-    small: { fontFamily: garamond, fontStyle: "italic", fontSize: "0.9rem", color: T.faint, marginTop: "0.3rem" },
-    trialTag: { fontFamily: cinzel, fontSize: "0.6rem", letterSpacing: "0.12em", color: T.accent, marginTop: "0.6rem" },
-    accountBar: { marginTop: "1.2rem", display: "flex", gap: "0.8rem", justifyContent: "center", alignItems: "center", fontFamily: garamond, fontSize: "0.9rem", color: T.muted, flexWrap: "wrap" },
-    formCard: { position: "relative", zIndex: 2, width: "100%", maxWidth: 440, padding: "2rem 1.5rem", textAlign: "center" },
-    formTitle: { fontFamily: cinzel, fontSize: "1.6rem", fontWeight: 700, color: T.text, lineHeight: 1.2, margin: "0 0 0.4rem" },
-    formNote: { fontFamily: garamond, fontStyle: "italic", fontSize: "1rem", color: T.muted, lineHeight: 1.6, margin: "0 0 1.2rem" },
-    tabs: { display: "flex", gap: 4, background: T.accentAlpha, padding: 4, borderRadius: 4, marginBottom: "1rem" },
-    tab: { flex: 1, padding: "0.6rem", background: "transparent", border: "none", color: T.muted, fontFamily: cinzel, fontSize: "0.68rem", letterSpacing: "0.08em", cursor: "pointer", borderRadius: 3 },
-    tabOn: { flex: 1, padding: "0.6rem", background: T.panel, border: `1px solid ${T.border}`, color: T.text, fontFamily: cinzel, fontSize: "0.68rem", letterSpacing: "0.08em", cursor: "pointer", borderRadius: 3 },
-    input: { width: "100%", background: T.panel, border: `1px solid ${T.border}`, borderRadius: 2, color: T.text, fontFamily: "'Crimson Text',Georgia,serif", fontSize: "1.05rem", padding: "0.75rem 0.95rem", outline: "none", marginBottom: "0.75rem", minHeight: 46 },
-    err: { background: "rgba(161,54,29,0.18)", border: "1px solid rgba(220,90,60,0.4)", color: "#F2B8A8", borderRadius: 2, padding: "0.6rem 0.8rem", fontSize: "0.92rem", marginBottom: "0.8rem", textAlign: "left" },
-    noticeOk: { background: "rgba(29,122,85,0.18)", border: "1px solid rgba(80,180,130,0.4)", color: "#BFE8D2", borderRadius: 2, padding: "0.6rem 0.8rem", fontSize: "0.92rem", marginBottom: "1rem" },
-    fine: { fontSize: "0.78rem", color: T.faint, marginTop: "1.2rem", lineHeight: 1.5 },
-    fineLink: { color: T.accentLt, textDecoration: "underline" },
-    page: { minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Crimson Text',Georgia,serif", paddingBottom: "4rem" },
-    header: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.8rem", padding: "0.9rem 1.2rem", borderBottom: `1px solid ${T.border}`, background: T.headerBg, position: "sticky", top: 0, zIndex: 10 },
-    headerEyebrow: { fontFamily: cinzel, fontSize: "0.58rem", letterSpacing: "0.3em", color: T.accent, marginBottom: "0.2rem" },
-    headerTitle: { fontFamily: cinzel, fontWeight: 700, color: T.text, margin: 0 },
-    filters: { display: "flex", flexWrap: "wrap", gap: "0.5rem", padding: "1.2rem 1.5rem", borderBottom: `1px solid ${T.borderFaint}` },
-    filter: { fontFamily: cinzel, fontSize: "0.6rem", letterSpacing: "0.1em", padding: "0.45rem 0.9rem", border: `1px solid ${T.borderFaint}`, background: "transparent", color: T.muted, cursor: "pointer", borderRadius: 2, minHeight: 36 },
-    filterOn: { fontFamily: cinzel, fontSize: "0.6rem", letterSpacing: "0.1em", padding: "0.45rem 0.9rem", border: `1px solid ${T.accent}`, background: T.accentAlpha, color: T.accentLt, cursor: "pointer", borderRadius: 2, minHeight: 36 },
-    sectionLabel: { fontFamily: cinzel, fontSize: "0.7rem", letterSpacing: "0.25em", color: T.accent, padding: "2rem 1.5rem 1rem", textTransform: "uppercase", borderBottom: `1px solid ${T.borderFaint}` },
-    sectionNote: { fontFamily: garamond, fontStyle: "italic", letterSpacing: 0, textTransform: "none", fontSize: "0.88rem", color: T.muted },
-    grid: { display: "grid", gap: "1rem", padding: "1.5rem" },
-    card: { background: T.panel, border: "1px solid", borderRadius: 2, cursor: "pointer", overflow: "hidden", transition: "transform 0.25s, box-shadow 0.25s", display: "flex", flexDirection: "column", padding: 0, color: T.text, font: "inherit" },
-    cardName: { fontFamily: cinzel, fontWeight: 700, color: T.text, marginBottom: "0.3rem" },
-    cardSub: { fontFamily: garamond, fontStyle: "italic", color: T.muted, lineHeight: 1.35, marginBottom: "0.4rem", fontSize: "0.86rem" },
-    cardYears: { fontFamily: cinzel, fontSize: "0.6rem", letterSpacing: "0.1em", color: T.accent },
-    badge: { display: "inline-block", fontFamily: cinzel, fontSize: "0.55rem", letterSpacing: "0.1em", border: `1px solid ${T.border}`, color: T.accent, padding: "0.2rem 0.5rem", marginTop: "0.5rem", borderRadius: 2 },
-    crossLinks: { display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center", padding: "2.5rem 1.5rem 0" },
-    crossLink: { fontFamily: cinzel, fontSize: "0.68rem", letterSpacing: "0.12em", color: T.accentLt, textDecoration: "none", border: `1px solid ${T.border}`, padding: "0.6rem 1rem", borderRadius: 2 },
-    chatPage: { minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Crimson Text',Georgia,serif", display: "flex", flexDirection: "column", margin: "0 auto" },
-    chatHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.8rem 1rem", borderBottom: `1px solid ${T.border}`, background: T.headerBg, gap: "0.8rem", position: "sticky", top: 0, zIndex: 10 },
-    chatName: { fontFamily: cinzel, fontWeight: 700, color: T.text, lineHeight: 1.2, fontSize: "0.95rem" },
-    chatTitle: { fontFamily: garamond, fontStyle: "italic", color: T.muted, lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: "0.85rem" },
-    chatYears: { fontFamily: cinzel, fontSize: "0.6rem", letterSpacing: "0.1em", color: T.accent },
-    sourcesBar: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.3rem 0.4rem", padding: "0.5rem 1rem", background: T.accentAlpha2, borderBottom: `1px solid ${T.borderFaint}` },
-    sourcesLabel: { fontFamily: cinzel, fontSize: "0.6rem", letterSpacing: "0.1em", color: T.accent, marginRight: "0.3rem" },
-    sourceTag: { fontFamily: cinzel, fontSize: "0.57rem", letterSpacing: "0.05em", padding: "0.15rem 0.45rem", border: `1px solid ${T.border}`, color: T.accentLt, borderRadius: 2 },
-    messages: { flex: 1, overflowY: "auto", padding: "1.2rem 1rem", display: "flex", flexDirection: "column", gap: "1rem" },
-    userBubble: { alignSelf: "flex-end", background: T.accentAlpha, border: `1px solid ${T.border}`, borderRadius: 2, padding: "0.7rem 1rem" },
-    botBubble: { alignSelf: "flex-start", background: T.panel, border: `1px solid ${T.borderFaint}`, borderRadius: 2, padding: "0.9rem 1rem", position: "relative" },
-    speaker: { fontFamily: cinzel, fontSize: "0.6rem", letterSpacing: "0.15em", color: T.accent, marginBottom: "0.4rem" },
-    bubbleText: { fontFamily: garamond, lineHeight: 1.7, color: T.text, fontSize: "1.04rem" },
-    replay: { background: "transparent", border: "none", cursor: "pointer", fontSize: "0.85rem", marginTop: "0.3rem", opacity: 0.55, float: "right", minWidth: 32, minHeight: 32 },
-    inputRow: { display: "flex", gap: "0.5rem", borderTop: `1px solid ${T.border}`, background: T.headerBg, alignItems: "flex-end", position: "sticky", bottom: 0 },
-    mic: { width: 44, height: 44, borderRadius: "50%", border: `1px solid ${T.border}`, cursor: "pointer", fontSize: "1.1rem", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: T.accentLt },
-    textarea: { flex: 1, background: T.panel, border: `1px solid ${T.border}`, borderRadius: 2, color: T.text, fontFamily: "'Crimson Text',Georgia,serif", fontSize: "1rem", padding: "0.6rem 0.8rem", resize: "none", outline: "none", lineHeight: 1.5 },
-    disclaimer: { fontFamily: garamond, fontStyle: "italic", color: T.faint, textAlign: "center", padding: "0.5rem 1rem 1rem", lineHeight: 1.5, fontSize: "0.75rem" },
-  };
+const CSS = `
+.vx { --serif: "Newsreader", Georgia, serif; --sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  min-height: 100vh; background: radial-gradient(120% 80% at 85% -10%, var(--raise) 0%, var(--ink) 60%); color: var(--paper);
+  font-family: var(--sans); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; display: flex; flex-direction: column; }
+.vx *, .vx *::before, .vx *::after { box-sizing: border-box; }
+.vx button { font: inherit; color: inherit; }
+.vx :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: 4px; }
+.vx a { color: inherit; }
+
+.vx-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 14px 24px; border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--ink) 82%, transparent); backdrop-filter: blur(10px); }
+.vx-top-l { justify-self: start; } .vx-top-r { justify-self: end; }
+.vx-brand { font-family: var(--serif); font-size: 17px; letter-spacing: 0.01em; text-decoration: none; color: var(--paper); white-space: nowrap; }
+.vx-brand sup { font-size: 9px; color: var(--muted); }
+.vx-link { background: none; border: none; padding: 4px 0; cursor: pointer; color: var(--muted); text-decoration: none; font-size: 14px; }
+.vx-link:hover { color: var(--paper); }
+.vx-account { display: flex; gap: 14px; align-items: center; font-size: 13px; color: var(--faint); }
+.vx-account-email { max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 700px) { .vx-account-email { display: none; } .vx-top { padding: 12px 16px; } .vx-brand { font-size: 15px; } }
+
+.vx-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 22px; border-radius: 10px; border: 1px solid transparent;
+  background: var(--accent); color: var(--ink); font-weight: 600; font-size: 15px; cursor: pointer; transition: background .15s, transform .15s; }
+.vx-btn:hover:not(:disabled) { background: var(--accent-soft); }
+.vx-btn:active:not(:disabled) { transform: translateY(1px); }
+.vx-btn:disabled { opacity: .55; cursor: not-allowed; }
+.vx-btn-wide { width: 100%; }
+.vx-btn-quiet { background: transparent; border-color: var(--line); color: var(--paper); }
+.vx-btn-quiet:hover:not(:disabled) { background: var(--deep); }
+.vx-center-text { display: block; margin: 14px auto 0; text-align: center; }
+
+.vx-kicker { margin: 0 0 10px; font-size: 13px; color: var(--accent); letter-spacing: .02em; }
+.vx-h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(30px, 4vw, 44px); line-height: 1.08; margin: 0 0 8px; letter-spacing: -0.01em; }
+.vx-h2 { font-family: var(--serif); font-weight: 500; font-size: 30px; line-height: 1.15; margin: 0 0 14px; }
+.vx-muted { color: var(--muted); margin: 0 0 18px; max-width: 62ch; }
+.vx-fine { font-size: 12px; color: var(--faint); line-height: 1.5; margin: 16px 0 0; }
+.vx-fine a { color: var(--muted); }
+.vx-note { border-radius: 10px; padding: 10px 14px; font-size: 14px; margin: 0 0 14px; }
+.vx-note-ok { background: rgba(70,170,120,.14); border: 1px solid rgba(90,190,140,.35); color: #CDEFDD; }
+.vx-note-err { background: rgba(200,80,60,.14); border: 1px solid rgba(220,100,80,.4); color: #F6CABF; }
+.vx-status { margin: 14px 0 0; font-size: 13px; color: var(--signal); }
+
+/* Landing */
+.vx-hero { flex: 1; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 56px; align-items: center; max-width: 1180px; width: 100%; margin: 0 auto; padding: 56px 24px; }
+.vx-title { font-family: var(--serif); font-weight: 400; font-size: clamp(56px, 8.5vw, 112px); line-height: .92; letter-spacing: -0.035em; margin: 0 0 22px; }
+.vx-lede { font-family: var(--serif); font-size: 21px; line-height: 1.5; color: var(--muted); margin: 0 0 30px; max-width: 34ch; }
+.vx-facts { display: flex; gap: 34px; margin: 0 0 30px; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.vx-facts div { margin: 0; } .vx-facts dt { font-family: var(--serif); font-size: 30px; line-height: 1; color: var(--paper); }
+.vx-facts dd { margin: 6px 0 0; font-size: 13px; color: var(--faint); }
+.vx-cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
+.vx-price { margin: 0; font-size: 14px; color: var(--muted); max-width: 30ch; }
+.vx-price strong { color: var(--paper); font-weight: 600; }
+.vx-mosaic { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.vx-mosaic-cell { position: relative; aspect-ratio: 3 / 4; opacity: 0; animation: vx-develop .9s ease forwards; }
+.vx-mosaic-cell .vx-plate { height: 100%; }
+.vx-mosaic-name { position: absolute; left: 10px; bottom: 8px; font-size: 12px; color: var(--paper); text-shadow: 0 1px 8px rgba(0,0,0,.8); }
+@keyframes vx-develop { from { opacity: 0; filter: brightness(2.2) blur(6px); } to { opacity: 1; filter: none; } }
+.vx-foot { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; padding: 22px 16px 30px; border-top: 1px solid var(--line); }
+@media (max-width: 900px) { .vx-hero { grid-template-columns: 1fr; gap: 36px; padding: 36px 16px; } .vx-lede { font-size: 19px; } .vx-facts { gap: 22px; } }
+
+/* Plates */
+.vx-plate { position: relative; display: block; width: 100%; height: 100%; overflow: hidden; border-radius: 6px; background: color-mix(in srgb, var(--tint, var(--accent)) 35%, var(--deep)); isolation: isolate; }
+.vx-plate.has-img { background: color-mix(in srgb, var(--accent) 34%, var(--ink)); }
+.vx-plate img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; filter: grayscale(1) contrast(1.12) brightness(.92); mix-blend-mode: luminosity; }
+.vx-plate::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, color-mix(in srgb, var(--ink) 75%, transparent)); pointer-events: none; }
+.vx-plate-engrave { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: .22;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.55) 0 1px, transparent 1px 3px); mix-blend-mode: multiply; }
+.vx-plate-mono { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 44px; color: var(--paper); opacity: .85; letter-spacing: .04em; }
+
+/* Gallery */
+.vx-gallery { max-width: 1180px; width: 100%; margin: 0 auto; padding: 40px 24px 20px; flex: 1; }
+.vx-gallery-head { margin-bottom: 26px; }
+.vx-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.vx-chips button { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 14px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.vx-chips button[aria-pressed="true"] { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+.vx-section { margin-top: 30px; }
+.vx-section-title { font-family: var(--serif); font-weight: 500; font-size: 22px; margin: 0 0 14px; }
+.vx-section-title span { font-family: var(--sans); font-size: 13px; color: var(--faint); font-weight: 400; margin-left: 6px; }
+.vx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+.vx-card { display: flex; flex-direction: column; text-align: left; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--deep); cursor: pointer; overflow: hidden; transition: border-color .2s; }
+.vx-card .vx-plate { aspect-ratio: 4 / 5; height: auto; border-radius: 0; }
+.vx-card:hover { border-color: var(--accent); }
+.vx-card:hover .vx-plate img { filter: grayscale(.15) contrast(1.05); mix-blend-mode: normal; }
+.vx-card-body { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px 14px; }
+.vx-card-name { font-family: var(--serif); font-size: 18px; line-height: 1.2; color: var(--paper); }
+.vx-card-title { font-size: 13px; color: var(--muted); line-height: 1.4; }
+.vx-card-meta { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .vx-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .vx-card-name { font-size: 15px; } .vx-card-title { display: none; } .vx-gallery { padding: 26px 14px 10px; } }
+
+/* Auth / join */
+.vx-center main, .vx-center .vx-panel { margin: 0 auto; }
+.vx-panel { width: 100%; max-width: 440px; margin: 48px auto; padding: 30px 28px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--deep) 88%, transparent); }
+@media (max-width: 520px) { .vx-panel { margin: 22px 14px; padding: 24px 18px; width: auto; } }
+.vx-seg { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 14px; }
+.vx-seg button { flex: 1; padding: 8px; border: none; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; font-size: 14px; }
+.vx-seg button[aria-selected="true"] { background: var(--raise); color: var(--paper); }
+.vx-field { display: block; margin-bottom: 12px; }
+.vx-field span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.vx-field input, .vx-inline input, .vx-composer textarea { width: 100%; background: var(--ink); border: 1px solid var(--line); border-radius: 10px; color: var(--paper); padding: 11px 13px; font: inherit; font-size: 15px; }
+.vx-field input:focus, .vx-inline input:focus, .vx-composer textarea:focus { outline: none; border-color: var(--signal); }
+.vx-inline { display: flex; gap: 8px; margin-top: 14px; }
+.vx-inline input { text-transform: uppercase; letter-spacing: .06em; }
+.vx-pricecard { display: flex; align-items: baseline; gap: 10px; padding: 16px 0; margin: 0 0 18px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.vx-pricecard-amt { font-family: var(--serif); font-size: 40px; line-height: 1; }
+.vx-pricecard-per { color: var(--muted); font-size: 14px; }
+
+/* Chat */
+.vx-chat-wrap { flex: 1; display: grid; grid-template-columns: 300px minmax(0, 1fr); max-width: 1180px; width: 100%; margin: 0 auto; }
+.vx-dossier { border-right: 1px solid var(--line); padding: 24px 22px; position: sticky; top: 57px; align-self: start; max-height: calc(100vh - 57px); overflow-y: auto; }
+.vx-dossier .vx-plate { aspect-ratio: 4 / 5; height: auto; margin-bottom: 16px; }
+.vx-dossier-name { font-family: var(--serif); font-weight: 500; font-size: 26px; line-height: 1.1; margin: 0 0 6px; }
+.vx-dossier-title { color: var(--muted); font-size: 14px; margin: 0 0 4px; }
+.vx-dossier-years { color: var(--faint); font-size: 13px; margin: 0 0 18px; font-variant-numeric: tabular-nums; }
+.vx-dossier-h { font-size: 13px; font-weight: 600; color: var(--accent); margin: 0 0 8px; }
+.vx-sources { list-style: none; margin: 0; padding: 0; }
+.vx-sources li { font-family: var(--serif); font-size: 15px; padding: 7px 0; border-top: 1px solid var(--line); color: var(--paper); }
+.vx-credit { font-size: 11px; color: var(--faint); margin: 14px 0 0; }
+.vx-convo { display: flex; flex-direction: column; min-height: calc(100vh - 57px); padding: 0 28px; }
+.vx-voiceprint { display: flex; align-items: center; justify-content: space-between; height: 44px; margin-top: 18px; padding: 0 2px; }
+.vx-voiceprint span { width: 3px; height: 2px; border-radius: 2px; background: color-mix(in srgb, var(--signal) 45%, transparent); transition: height .3s; }
+.vx-voiceprint.is-live span { background: var(--signal); animation: vx-wave 900ms ease-in-out infinite alternate; }
+@keyframes vx-wave { 0% { height: 3px; } 35% { height: 26px; } 60% { height: 9px; } 100% { height: 38px; } }
+.vx-live-label { min-height: 20px; margin: 6px 0 0; font-size: 13px; color: var(--signal); }
+.vx-transcript { flex: 1; padding: 18px 0 24px; display: flex; flex-direction: column; gap: 22px; }
+.vx-q { align-self: flex-end; max-width: 78%; background: var(--raise); border: 1px solid var(--line); border-radius: 14px 14px 4px 14px; padding: 10px 14px; }
+.vx-q p { margin: 0; white-space: pre-wrap; }
+.vx-a { max-width: 70ch; border-left: 2px solid var(--accent); padding-left: 16px; }
+.vx-a.is-system { border-left-color: var(--faint); opacity: .85; }
+.vx-a-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.vx-a-who { font-size: 13px; font-weight: 600; color: var(--accent); }
+.vx-a-text { margin: 0; font-family: var(--serif); font-size: 19px; line-height: 1.62; white-space: pre-wrap; color: var(--paper); }
+.vx-icon { display: inline-flex; padding: 4px; border: none; background: none; color: var(--faint); cursor: pointer; border-radius: 6px; }
+.vx-icon:hover { color: var(--signal); }
+.vx-dots { display: flex; gap: 5px; padding: 8px 0; }
+.vx-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--signal); animation: vx-dot 1.2s infinite; }
+.vx-dots span:nth-child(2) { animation-delay: .2s; } .vx-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes vx-dot { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-4px); } }
+.vx-composer { position: sticky; bottom: 0; display: flex; gap: 10px; align-items: flex-end; padding: 14px 0; background: linear-gradient(180deg, transparent, var(--ink) 30%); }
+.vx-composer textarea { resize: none; line-height: 1.5; min-height: 48px; }
+.vx-mic { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line); background: var(--deep); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.vx-mic.is-on { background: #8B2A1E; color: #fff; border-color: transparent; }
+.vx-send { min-height: 48px; }
+@media (max-width: 860px) {
+  .vx-chat-wrap { grid-template-columns: 1fr; }
+  .vx-dossier { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 76px 1fr; gap: 14px; padding: 16px; }
+  .vx-dossier .vx-plate { aspect-ratio: 1; margin: 0; border-radius: 50%; }
+  .vx-dossier-name { font-size: 20px; } .vx-dossier-years { margin-bottom: 0; }
+  .vx-dossier-h, .vx-sources, .vx-credit { display: none; }
+  .vx-convo { padding: 0 16px; min-height: auto; }
+  .vx-a-text { font-size: 17px; } .vx-q { max-width: 88%; }
 }
+@media (prefers-reduced-motion: reduce) {
+  .vx-mosaic-cell { animation: none; opacity: 1; }
+  .vx-voiceprint.is-live span { animation: none; height: 14px; }
+  .vx-dots span { animation: none; opacity: .7; }
+}
+`;
