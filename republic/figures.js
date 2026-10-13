@@ -37,7 +37,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Farewell Address (1796)",
@@ -62,7 +63,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Federalist Papers (51 essays)",
@@ -87,7 +89,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Declaration of Independence",
@@ -112,7 +115,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Federalist Papers (29 essays)",
@@ -137,7 +141,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "A Defence of the Constitutions",
@@ -162,7 +167,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Autobiography",
@@ -187,7 +193,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Monroe Doctrine (1823)",
@@ -211,7 +218,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Federalist Papers (5 essays)",
@@ -236,7 +244,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-GB"
     },
     "primarySources": [
       "Common Sense (1776)",
@@ -261,7 +270,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Boston Gazette writings",
@@ -286,7 +296,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Give Me Liberty speech (1775)",
@@ -311,7 +322,8 @@ export const FIGURES = [
       "voiceHint": [
         "female",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Letters to John Adams",
@@ -338,7 +350,8 @@ export const FIGURES = [
       "voiceHint": [
         "female",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Letters to Anna Payne Cutts",

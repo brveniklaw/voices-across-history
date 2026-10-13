@@ -25,21 +25,46 @@ function useMobile(bp = 640) {
   return mobile;
 }
 
+// Picks the best available device voice for a figure: their regional English first
+// (American, British, Scottish), then the right gender, preferring higher-quality voices.
+const FEMALE = /female|woman|samantha|victoria|karen|serena|moira|tessa|fiona|kate|susan|martha|allison|ava|zira|hazel|libby|sonia|jenny|aria|emma|amy|joanna|salli|kimberly|nicole|catherine|zoe|google us english$/i;
+const MALE = /\bmale\b|daniel|arthur|oliver|george|fred|alex|tom|aaron|david|mark|ryan|guy|eric|brian|matthew|justin|joey|thomas|james|rishi|google uk english male/i;
+const QUALITY = /natural|neural|enhanced|premium|online|google/i;
+
+function pickVoice(profile = {}) {
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  const want = (profile.lang || "en-US").toLowerCase();
+  const female = (profile.voiceHint || []).includes("female");
+  const norm = (v) => String(v.lang || "").replace("_", "-").toLowerCase();
+  const genderOk = (v) => (female ? FEMALE.test(v.name) && !/\bmale\b/i.test(v.name.replace(/female/i, "")) : MALE.test(v.name) && !/female/i.test(v.name));
+  const score = (v) => (QUALITY.test(v.name) ? 2 : 0) + (v.localService ? 0 : 1);
+  const best = (list) => list.sort((a, b) => score(b) - score(a))[0];
+  const tiers = [];
+  if (want === "en-gb-scotland") {
+    tiers.push(voices.filter((v) => /fiona|scot/i.test(v.name) || norm(v).includes("scotland")));
+    tiers.push(voices.filter((v) => norm(v) === "en-gb"));
+  } else {
+    // Scottish voices (e.g. Apple's Fiona) are reserved for Scottish figures.
+    const notScot = voices.filter((v) => !/fiona|scot/i.test(v.name) && !norm(v).includes("scotland"));
+    tiers.push(notScot.filter((v) => norm(v) === want));
+    tiers.push(notScot.filter((v) => norm(v).startsWith("en")));
+  }
+  tiers.push(voices.filter((v) => norm(v).startsWith("en")));
+  for (const t of tiers) {
+    const g = t.filter(genderOk);
+    if (g.length) return best(g);
+  }
+  for (const t of tiers) if (t.length) return best(t);
+  return null;
+}
+
 function speakText(text, voiceProfile = {}, onEnd) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
-  const voices = window.speechSynthesis.getVoices();
-  const hints = voiceProfile.voiceHint || [];
-  let chosen = null;
-  if (hints.includes("female")) {
-    chosen = voices.find((v) => /female|woman/i.test(v.name)) ||
-      voices.find((v) => /Samantha|Victoria|Karen|Serena|Moira/.test(v.name));
-  } else {
-    chosen = voices.find((v) => /male/i.test(v.name) && !/female/i.test(v.name)) ||
-      voices.find((v) => /Daniel|Arthur|George|Fred|Oliver/.test(v.name));
-  }
-  if (chosen) utter.voice = chosen;
+  const chosen = pickVoice(voiceProfile);
+  if (chosen) { utter.voice = chosen; utter.lang = chosen.lang; } else { utter.lang = voiceProfile.lang === "en-GB-scotland" ? "en-GB" : (voiceProfile.lang || "en-US"); }
   utter.pitch = voiceProfile.pitch || 1;
   utter.rate = voiceProfile.rate || 0.9;
   utter.onend = onEnd || null;

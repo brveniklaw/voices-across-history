@@ -32,7 +32,12 @@ export const FIGURES = [
     "portraitCredit": "Roman copy of Greek original, Louvre Museum",
     "voiceProfile": {
       "pitch": 0.88,
-      "rate": 0.85
+      "rate": 0.85,
+      "lang": "en-GB",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "Apology",
@@ -57,7 +62,12 @@ export const FIGURES = [
     "portraitCredit": "Roman copy of Greek original, Palazzo Altemps, Rome",
     "voiceProfile": {
       "pitch": 0.87,
-      "rate": 0.87
+      "rate": 0.87,
+      "lang": "en-GB",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "Nicomachean Ethics",
@@ -81,7 +91,12 @@ export const FIGURES = [
     "portraitCredit": "Head of Marcus Aurelius — Archaeological Museum of Heraklion / Commons",
     "voiceProfile": {
       "pitch": 0.86,
-      "rate": 0.84
+      "rate": 0.84,
+      "lang": "en-GB",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "Meditations (12 books)"
@@ -100,7 +115,12 @@ export const FIGURES = [
     "portraitCredit": "Oxford edition frontispiece, 1715",
     "voiceProfile": {
       "pitch": 0.9,
-      "rate": 0.9
+      "rate": 0.9,
+      "lang": "en-GB",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "Enchiridion (Handbook)",
@@ -121,7 +141,12 @@ export const FIGURES = [
     "portraitCredit": "Godfrey Kneller, 1697 — Hermitage Museum",
     "voiceProfile": {
       "pitch": 0.9,
-      "rate": 0.88
+      "rate": 0.88,
+      "lang": "en-GB",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "Two Treatises of Government",
@@ -143,7 +168,12 @@ export const FIGURES = [
     "portraitCredit": "Painted portrait — Commons",
     "voiceProfile": {
       "pitch": 0.92,
-      "rate": 0.9
+      "rate": 0.9,
+      "lang": "en-GB",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "The Social Contract",
@@ -165,7 +195,12 @@ export const FIGURES = [
     "portraitCredit": "Anonymous portrait, c. 1790 — Kant-Museum, Königsberg",
     "voiceProfile": {
       "pitch": 0.87,
-      "rate": 0.83
+      "rate": 0.83,
+      "lang": "en-GB",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "Critique of Pure Reason",
@@ -187,7 +222,12 @@ export const FIGURES = [
     "portraitCredit": "Friedrich Hartmann, 1875 — Nietzsche Archive",
     "voiceProfile": {
       "pitch": 0.95,
-      "rate": 0.95
+      "rate": 0.95,
+      "lang": "en-GB",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "Thus Spoke Zarathustra",
@@ -210,7 +250,12 @@ export const FIGURES = [
     "portraitCredit": "Photograph, c. 1857 — Library of Congress",
     "voiceProfile": {
       "pitch": 0.9,
-      "rate": 0.88
+      "rate": 0.88,
+      "lang": "en-US",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "Self-Reliance",
@@ -234,7 +279,12 @@ export const FIGURES = [
     "portraitCredit": "Benjamin Maxham daguerreotype, 1856 — Morgan Library",
     "voiceProfile": {
       "pitch": 0.9,
-      "rate": 0.87
+      "rate": 0.87,
+      "lang": "en-US",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "Walden",
@@ -257,7 +307,12 @@ export const FIGURES = [
     "portraitCredit": "London Stereoscopic Co., c. 1870 — National Portrait Gallery / Commons",
     "voiceProfile": {
       "pitch": 0.9,
-      "rate": 0.9
+      "rate": 0.9,
+      "lang": "en-GB",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "On Liberty",
@@ -280,7 +335,12 @@ export const FIGURES = [
     "portraitCredit": "David Hume portrait — Commons",
     "voiceProfile": {
       "pitch": 0.88,
-      "rate": 0.87
+      "rate": 0.87,
+      "lang": "en-GB-scotland",
+      "voiceHint": [
+        "male",
+        "english"
+      ]
     },
     "primarySources": [
       "A Treatise of Human Nature",

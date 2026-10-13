@@ -39,7 +39,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-GB"
     },
     "primarySources": [
       "Codex Atlanticus",
@@ -68,7 +69,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-GB"
     },
     "primarySources": [
       "Sidereus Nuncius (1610)",
@@ -96,7 +98,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-GB"
     },
     "primarySources": [
       "Philosophiæ Naturalis Principia Mathematica (1687)",
@@ -124,7 +127,8 @@ export const FIGURES = [
       "voiceHint": [
         "female",
         "english"
-      ]
+      ],
+      "lang": "en-GB"
     },
     "primarySources": [
       "Notes on Menabrea's Sketch of the Analytical Engine (1843)",
@@ -151,7 +155,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Menlo Park & West Orange laboratory notebooks",
@@ -178,7 +183,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-GB"
     },
     "primarySources": [
       "My Inventions (1919)",
@@ -205,7 +211,8 @@ export const FIGURES = [
       "voiceHint": [
         "female",
         "english"
-      ]
+      ],
+      "lang": "en-GB"
     },
     "primarySources": [
       "Researches on Radioactive Substances (1903 thesis)",
@@ -232,7 +239,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-US"
     },
     "primarySources": [
       "Wilbur's letter to the Smithsonian (1899)",
@@ -260,7 +268,8 @@ export const FIGURES = [
       "voiceHint": [
         "male",
         "english"
-      ]
+      ],
+      "lang": "en-GB"
     },
     "primarySources": [
       "On Computable Numbers (1936)",
