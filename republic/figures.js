@@ -18,9 +18,9 @@ export const COLLECTION = {
   otherCollections: [{ label: "Voices of the Philosophers", href: "/philosophers/" }, { label: "Voices of the Inventors", href: "/inventors/" }],
   greeting: (f) => `I am ${f.name}. ${f.title}. I stand ready to speak with you on matters of consequence — ask of me what you will, and I shall answer faithfully from what I have written and said.`,
   theme: {
-    ink: "#0D1626", deep: "#132036", raise: "#1C2C48", paper: "#EFE7D6",
-    muted: "rgba(239,231,214,0.74)", faint: "rgba(239,231,214,0.5)", line: "rgba(239,231,214,0.13)",
-    accent: "#C9A24A", accentSoft: "#DDB866", signal: "#E9D08A",
+    ink: "#100C06", deep: "#1A1208", raise: "#2A1E0E", paper: "#F5EDD6",
+    muted: "rgba(245,237,214,0.74)", faint: "rgba(245,237,214,0.5)", line: "rgba(184,137,42,0.24)",
+    accent: "#B8892A", accentSoft: "#D4A84B", signal: "#E2C77A",
   },
 };
 
