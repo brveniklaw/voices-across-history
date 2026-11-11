@@ -381,8 +381,8 @@ export const FIGURES = [
     "short": "Warren",
     "title": "Historian, Playwright and Poet of the Revolution",
     "years": "1728–1814",
-    "portrait": null,
-    "portraitCredit": "",
+    "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Mrs_James_Warren_(Mercy_Otis),_by_John_Singleton_Copley.jpg?width=500",
+    "portraitCredit": "John Singleton Copley, c. 1763 — Museum of Fine Arts, Boston",
     "monogram": "MW",
     "voiceProfile": {
       "pitch": 1.12,

@@ -371,8 +371,8 @@ export const FIGURES = [
     "era": "Enlightenment England",
     "icon": "🪶",
     "color": "#4A3A6B",
-    "portrait": null,
-    "portraitCredit": "",
+    "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Mary_Wollstonecraft_by_John_Opie_(c._1797).jpg?width=500",
+    "portraitCredit": "John Opie, c. 1797 — National Portrait Gallery, London",
     "monogram": "MW",
     "voiceProfile": { "pitch": 1.06, "rate": 0.9, "voiceHint": ["female", "english"], "lang": "en-GB" },
     "primarySources": [

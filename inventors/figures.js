@@ -238,8 +238,8 @@ export const FIGURES = [
     "era": "Modern Science",
     "icon": "\u2708\ufe0f",
     "color": "#6B4A2A",
-    "portrait": null,
-    "portraitCredit": "",
+    "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Wright_Brothers_in_1910.jpg?width=500",
+    "portraitCredit": "Photograph, 1910",
     "voiceProfile": {
       "pitch": 0.9,
       "rate": 0.92,
@@ -296,8 +296,8 @@ export const FIGURES = [
     "era": "Industrial Age",
     "icon": "🏮",
     "color": "#2A5A6B",
-    "portrait": null,
-    "portraitCredit": "",
+    "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Florence_Nightingale_(H_Hering_NPG_x82368).jpg?width=500",
+    "portraitCredit": "Henry Hering, photograph — National Portrait Gallery, London",
     "monogram": "FN",
     "voiceProfile": { "pitch": 1.08, "rate": 0.88, "voiceHint": ["female", "english"], "lang": "en-GB" },
     "primarySources": [
