@@ -1202,6 +1202,14 @@ const CSS = `
 .vx-era-explorers .vx-a.is-page { --page: color-mix(in srgb, #D8C9A3 7%, var(--deep)); }
 .vx-era-explorers .vx-section-title::before { content: "\\2726"; color: var(--signal); margin-right: 8px; font-size: 16px; vertical-align: 2px; }
 
+.vx.vx-era-women { background:
+  radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--accent) 8%, transparent) 0 2px, transparent 3px) 0 0 / 46px 46px,
+  radial-gradient(circle at 50% 50%, transparent 0 14px, color-mix(in srgb, var(--accent) 5%, transparent) 14px 15px, transparent 16px) 23px 23px / 46px 46px,
+  radial-gradient(120% 80% at 85% -10%, var(--raise) 0%, var(--ink) 60%); background-attachment: fixed; }
+.vx-era-women .vx-a.is-page { --page: color-mix(in srgb, #EAD3D9 7%, var(--deep)); border-left: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); }
+.vx-era-women .vx-section-title { font-style: italic; }
+.vx-era-women .vx-section-title::after { content: ""; display: block; width: 48px; margin-top: 8px; border-top: 1px solid var(--signal); box-shadow: 0 3px 0 -2px var(--signal); }
+
 /* Roundtable */
 .vx-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 18px; }
 .vx-suggest { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 6px; }

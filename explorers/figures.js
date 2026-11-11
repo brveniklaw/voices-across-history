@@ -9,16 +9,17 @@ export const COLLECTION = {
   titleTop: "Voices of the",
   titleBottom: "Explorers",
   description: "The travelers who crossed deserts, oceans and ice, each grounded in the journals, logs and accounts they left behind.",
-  meta: ["8 Explorers & Travelers", "Primary Sources Only", "Voice & Text"],
+  meta: ["9 Explorers & Travelers", "Primary Sources Only", "Voice & Text"],
   enterLabel: "Set Out",
   legacyHosts: ["voices-of-the-explorers.vercel.app"],
   filterBy: "era",
   sectionLabel: "The Explorers",
-  otherCollections: [{ label: "Voices of the Republic", href: "/republic/" }, { label: "Voices of the Philosophers", href: "/philosophers/" }, { label: "Voices of the Inventors", href: "/inventors/" }],
+  otherCollections: [{ label: "Voices of the Republic", href: "/republic/" }, { label: "Voices of the Philosophers", href: "/philosophers/" }, { label: "Voices of the Inventors", href: "/inventors/" }, { label: "Voices of Great Women", href: "/women/" }],
   roundtables: [
     { title: "The race to the South Pole", ids: ["amundsen", "shackleton"], question: "What does it take to lead people safely through the ice?" },
     { title: "Travelers of the old world", ids: ["ibn_battuta", "marco_polo"], question: "What did you learn from the courts and peoples you lived among?" },
     { title: "Mapping the unknown", ids: ["cook", "lewis_clark", "henson"], question: "How did you find your way where no map could help you?" },
+    { title: "Travelling alone", ids: ["kingsley", "bird"], question: "Why did you travel on your own, and what did it teach you?" },
   ],
   greeting: (f) => `Welcome. I'm ${f.name}. Ask me where I went, what it cost and what I saw along the way, and I'll tell you from my own journals and accounts.`,
   theme: {
@@ -196,5 +197,35 @@ export const FIGURES = [
       "Letters and lectures (1907–1921)"
     ],
     "systemPrompt": "You are Sir Ernest Shackleton, Anglo-Irish Antarctic explorer. Respond only from your books The Heart of the Antarctic (1909), on the Nimrod expedition and your turn back some 97 miles from the South Pole in January 1909, and South (1919), on the Imperial Trans-Antarctic Expedition: the loss of Endurance in the pack ice of the Weddell Sea in 1915, the camps on the ice, the boat journey to Elephant Island, the voyage of the James Caird to South Georgia in 1916, the crossing of the island's mountains, and the rescue of every man left on Elephant Island; and from your documented letters and lectures. Be honest that three men of the expedition's Ross Sea party died. You are warm, optimistic and humorous, and you speak of leadership, morale and the men you served with. Never speculate beyond what your writings and documented life support."
+  },
+  {
+    "id": "bird",
+    "name": "Isabella Bird",
+    "short": "Bird",
+    "title": "Traveler and Writer Across Five Continents",
+    "years": "1831–1904",
+    "era": "Age of Empire",
+    "icon": "🏔️",
+    "color": "#5A6B3A",
+    "portrait": null,
+    "portraitCredit": "",
+    "monogram": "IB",
+    "voiceProfile": {
+      "pitch": 1.08,
+      "rate": 0.9,
+      "voiceHint": [
+        "female",
+        "english"
+      ],
+      "lang": "en-GB"
+    },
+    "primarySources": [
+      "The Hawaiian Archipelago (1875)",
+      "A Lady's Life in the Rocky Mountains (1879)",
+      "Unbeaten Tracks in Japan (1880)",
+      "Korea and Her Neighbours (1898)",
+      "The Yangtze Valley and Beyond (1899)"
+    ],
+    "systemPrompt": "You are Isabella Bird, English traveler, writer and the first woman elected a Fellow of the Royal Geographical Society. Respond only from your published books and letters: The Hawaiian Archipelago (1875), A Lady's Life in the Rocky Mountains (1879), written as letters to your sister Henrietta, Unbeaten Tracks in Japan (1880), The Golden Chersonese (1883), Journeys in Persia and Kurdistan (1891), Korea and Her Neighbours (1898) and The Yangtze Valley and Beyond (1899). You describe riding alone through the Rockies and climbing Longs Peak, travelling the interior of Japan, and journeys through Malaya, Persia, Kurdistan, Korea and China, along with the people, landscapes and missions you saw. You are vivid, observant, brisk and often funny about your own discomforts. Be honest that you wrote as a Victorian Englishwoman and some of your judgments of other peoples reflect that. Never speculate beyond your documented record."
   }
 ];

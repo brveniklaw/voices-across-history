@@ -3,23 +3,23 @@
 export const COLLECTION = {
   id: "republic",
   kicker: "American founders, in their own words",
-  countLabel: "founders & founding wives",
+  countLabel: "founders & founding women",
   name: "Voices of the Republic",
   titleTop: "Voices of the",
   titleBottom: "Republic",
   description: "Converse with the Founders of the American Republic. Every word grounded in their letters, pamphlets, and founding documents.",
-  meta: ["13 Founders & Founding Wives", "Primary Sources Only", "Voice & Text"],
+  meta: ["14 Founders & Founding Women", "Primary Sources Only", "Voice & Text"],
   enterLabel: "Enter the Hall of Founders",
   legacyHosts: ["voices-of-the-republic.vercel.app"],
   sections: [
     { label: "The Founders", match: (f) => !f.wife },
     { label: "Founding Wives", note: "Responses drawn exclusively from verified letters & documented writings", badge: "Primary Sources Only", match: (f) => !!f.wife },
   ],
-  otherCollections: [{ label: "Voices of the Philosophers", href: "/philosophers/" }, { label: "Voices of the Inventors", href: "/inventors/" }, { label: "Voices of the Explorers", href: "/explorers/" }],
+  otherCollections: [{ label: "Voices of the Philosophers", href: "/philosophers/" }, { label: "Voices of the Inventors", href: "/inventors/" }, { label: "Voices of the Explorers", href: "/explorers/" }, { label: "Voices of Great Women", href: "/women/" }],
   roundtables: [
     { title: "A national bank", ids: ["hamilton", "jefferson"], question: "Should the new nation have a national bank?" },
     { title: "A bill of rights", ids: ["madison", "henry", "jefferson"], question: "Does the Constitution need a bill of rights, and why?" },
-    { title: "Remember the ladies", ids: ["abigail", "adams"], question: "What should the new laws owe to women?" },
+    { title: "Remember the ladies", ids: ["abigail", "warren", "adams"], question: "What should the new laws owe to women?" },
   ],
   greeting: (f) => `Good day. I'm ${f.name}. What would you like to talk about? I'll answer you from my own letters, papers and speeches.`,
   theme: {
@@ -374,5 +374,33 @@ export const FIGURES = [
     "wife": true,
     "limitedRecord": true,
     "short": "Dolley"
+  },
+  {
+    "id": "warren",
+    "name": "Mercy Otis Warren",
+    "short": "Warren",
+    "title": "Historian, Playwright and Poet of the Revolution",
+    "years": "1728–1814",
+    "portrait": null,
+    "portraitCredit": "",
+    "monogram": "MW",
+    "voiceProfile": {
+      "pitch": 1.12,
+      "rate": 0.88,
+      "voiceHint": [
+        "female",
+        "english"
+      ],
+      "lang": "en-US"
+    },
+    "primarySources": [
+      "History of the Rise, Progress and Termination of the American Revolution (1805)",
+      "Observations on the New Constitution, by \"A Columbian Patriot\" (1788)",
+      "The Adulateur (1772) and The Group (1775)",
+      "Letters to Abigail Adams and John Adams"
+    ],
+    "systemPrompt": "You are Mercy Otis Warren of Plymouth, Massachusetts, poet, playwright and historian of the American Revolution, sister of James Otis and wife of James Warren. Respond only from your documented writings: your satirical plays The Adulateur (1772) and The Group (1775), your poems, your pamphlet Observations on the New Constitution, published in 1788 as \"A Columbian Patriot\", your three-volume History of the Rise, Progress and Termination of the American Revolution (1805), and your letters to Abigail Adams, John Adams and others. You speak as a committed republican who feared concentrated power, argued for a bill of rights and opposed the Constitution as first written. You are learned, sharp and principled, and you quarrelled openly with John Adams over how your History portrayed him. Never speculate beyond your documented record.",
+    "accent": "Learned, pointed, New England conviction",
+    "color": "#5A3A6B"
   }
 ];

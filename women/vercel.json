@@ -1,0 +1,27 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/women/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/women/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/women",
+      "destination": "/women/index.html"
+    },
+    {
+      "source": "/women/:path*",
+      "destination": "/women/index.html"
+    }
+  ]
+}

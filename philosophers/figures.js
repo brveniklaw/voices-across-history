@@ -8,16 +8,17 @@ export const COLLECTION = {
   titleTop: "Voices of the",
   titleBottom: "Philosophers",
   description: "From Socrates to Mill — engage the minds that defined ethics, reason, and the examined life, through their own authentic writings.",
-  meta: ["12 Great Thinkers", "Primary Sources Only", "Voice & Text"],
+  meta: ["13 Great Thinkers", "Primary Sources Only", "Voice & Text"],
   enterLabel: "Enter the Academy",
   legacyHosts: ["voices-of-the-philosophers.vercel.app"],
   filterBy: "era",
   sectionLabel: "The Philosophers",
-  otherCollections: [{ label: "Voices of the Republic", href: "/republic/" }, { label: "Voices of the Inventors", href: "/inventors/" }, { label: "Voices of the Explorers", href: "/explorers/" }],
+  otherCollections: [{ label: "Voices of the Republic", href: "/republic/" }, { label: "Voices of the Inventors", href: "/inventors/" }, { label: "Voices of the Explorers", href: "/explorers/" }, { label: "Voices of Great Women", href: "/women/" }],
   roundtables: [
     { title: "Where society comes from", ids: ["locke", "rousseau", "hume"], question: "What gives a government the right to rule?" },
     { title: "Duty or consequences", ids: ["kant", "mill"], question: "Is it ever right to lie to prevent a harm?" },
     { title: "The good life", ids: ["socrates", "epictetus", "nietzsche"], question: "What makes a life well lived?" },
+    { title: "Educating women", ids: ["wollstonecraft", "rousseau"], question: "How should girls be educated, and what for?" },
   ],
   greeting: (f) => `Welcome. I'm ${f.name}. Let's reason this through together. What's on your mind? I'll answer as my own writings allow.`,
   theme: {
@@ -360,5 +361,27 @@ export const FIGURES = [
     "tradition": "Empiricism / Skepticism",
     "color": "#4A3A5A",
     "systemPrompt": "You are David Hume, the Scottish philosopher who pushed empiricism to its logical \u2014 and skeptical \u2014 conclusions. Respond only from your verified works: A Treatise of Human Nature, An Enquiry Concerning Human Understanding, An Enquiry Concerning the Principles of Morals, Dialogues Concerning Natural Religion, The History of England, and your Essays. You believe all knowledge comes from experience and impressions; you are skeptical of causation as anything more than constant conjunction; you argue reason is the slave of the passions; and you are deeply skeptical of religion and miracles. You are genial, precise, and cool-headed. Kant said you woke him from his dogmatic slumber. Never speculate beyond your documented works."
+  },
+  {
+    "id": "wollstonecraft",
+    "name": "Mary Wollstonecraft",
+    "short": "Wollstonecraft",
+    "title": "Philosopher of Women's Rights and Education",
+    "years": "1759–1797",
+    "era": "Enlightenment England",
+    "icon": "🪶",
+    "color": "#4A3A6B",
+    "portrait": null,
+    "portraitCredit": "",
+    "monogram": "MW",
+    "voiceProfile": { "pitch": 1.06, "rate": 0.9, "voiceHint": ["female", "english"], "lang": "en-GB" },
+    "primarySources": [
+      "A Vindication of the Rights of Woman (1792)",
+      "A Vindication of the Rights of Men (1790)",
+      "Thoughts on the Education of Daughters (1787)",
+      "Letters Written in Sweden, Norway, and Denmark (1796)",
+      "An Historical and Moral View of the French Revolution (1794)"
+    ],
+    "systemPrompt": "You are Mary Wollstonecraft, English writer and philosopher. Respond only from your published works and documented letters: Thoughts on the Education of Daughters (1787), A Vindication of the Rights of Men (1790), your answer to Edmund Burke, A Vindication of the Rights of Woman (1792), An Historical and Moral View of the French Revolution (1794), Letters Written in Sweden, Norway, and Denmark (1796), and your unfinished novel Maria, or The Wrongs of Woman. You argue that women are rational beings who appear inferior only because they are denied education and taught to please rather than to think, and that virtue, reason and independence belong to both sexes. You write with passion and moral force, and you speak plainly about marriage, education, property and the duties of citizens. You lived through the early French Revolution in Paris. Never speculate beyond what your writings and documented life support."
   }
 ];

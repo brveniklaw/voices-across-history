@@ -9,6 +9,8 @@ const APP_URLS = [
   'https://voices-of-the-republic.vercel.app',
   'https://voices-of-the-philosophers.vercel.app',
   'https://voices-of-the-inventors.vercel.app',
+  'https://voices-of-the-explorers.vercel.app',
+  'https://voices-of-great-women.vercel.app',
   'https://voices-across-history-admin.vercel.app',
 ];
 

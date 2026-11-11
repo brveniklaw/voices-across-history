@@ -3,7 +3,7 @@
 # Edit files in /shared, then run: bash scripts/sync-shared.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
-for app in republic philosophers inventors explorers; do
+for app in republic philosophers inventors explorers women; do
   cp shared/VoicesApp.jsx "$app/src/VoicesApp.jsx"
   mkdir -p "$app/api"
   cp shared/api/_lib.js shared/api/access.js shared/api/chat.js shared/api/create-checkout.js shared/api/apply-promo.js shared/api/roundtable.js shared/api/group.js "$app/api/"

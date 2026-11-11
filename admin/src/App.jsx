@@ -598,7 +598,7 @@ function FeedbackView() {
         action={<button onClick={() => exportCSV(filtered, "vah-feedback.csv")} style={btnStyle}>Export CSV</button>}
       />
       <div style={{ display: "flex", gap: "0.5rem", padding: "0.5rem 2rem 1rem" }}>
-        {["all","republic","philosophers","inventors"].map(f => (
+        {["all","republic","philosophers","inventors","explorers","women"].map(f => (
           <button key={f} onClick={() => setAppFilter(f)} style={{ ...filterBtnStyle, background: appFilter === f ? T.gold : "transparent", color: appFilter === f ? "#000" : T.textMuted, borderColor: appFilter === f ? T.gold : T.border }}>
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
@@ -661,6 +661,8 @@ function HealthView() {
     { label: "Voices of the Republic", url: "https://voices-of-the-republic.vercel.app" },
     { label: "Voices of the Philosophers", url: "https://voices-of-the-philosophers.vercel.app" },
     { label: "Voices of the Inventors", url: "https://voices-of-the-inventors.vercel.app" },
+    { label: "Voices of the Explorers", url: "https://voices-of-the-explorers.vercel.app" },
+    { label: "Voices of Great Women",  url: "https://voices-of-great-women.vercel.app" },
     { label: "Admin Dashboard",        url: "https://voices-across-history-admin.vercel.app" },
   ];
 
