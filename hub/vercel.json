@@ -39,6 +39,18 @@
     {
       "source": "/inventors/:path+",
       "destination": "https://voices-of-the-inventors.vercel.app/inventors/:path+"
+    },
+    {
+      "source": "/explorers",
+      "destination": "https://voices-of-the-explorers.vercel.app/explorers/"
+    },
+    {
+      "source": "/explorers/",
+      "destination": "https://voices-of-the-explorers.vercel.app/explorers/"
+    },
+    {
+      "source": "/explorers/:path+",
+      "destination": "https://voices-of-the-explorers.vercel.app/explorers/:path+"
     }
   ]
 }

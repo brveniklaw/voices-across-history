@@ -19,10 +19,13 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { code, type, max_uses, expires_at, note } = req.body;
     if (!code || !type) return res.status(400).json({ error: 'Code and type are required.' });
+    // The table accepts 'trial' (7 days) or 'permanent'; older admin builds sent 'trial_7day'.
+    const kind = type === 'permanent' ? 'permanent' : type === 'trial' || type === 'trial_7day' ? 'trial' : null;
+    if (!kind) return res.status(400).json({ error: 'Type must be a 7-day trial or permanent.' });
 
     const { error } = await supabase.from('vah_promo_codes').insert({
       code: code.toUpperCase().trim(),
-      type,
+      type: kind,
       max_uses: max_uses ?? null,
       expires_at: expires_at || null,
       note: note || null,

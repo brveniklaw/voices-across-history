@@ -15,8 +15,13 @@ export const COLLECTION = {
     { label: "The Founders", match: (f) => !f.wife },
     { label: "Founding Wives", note: "Responses drawn exclusively from verified letters & documented writings", badge: "Primary Sources Only", match: (f) => !!f.wife },
   ],
-  otherCollections: [{ label: "Voices of the Philosophers", href: "/philosophers/" }, { label: "Voices of the Inventors", href: "/inventors/" }],
-  greeting: (f) => `I am ${f.name}. ${f.title}. I stand ready to speak with you on matters of consequence — ask of me what you will, and I shall answer faithfully from what I have written and said.`,
+  otherCollections: [{ label: "Voices of the Philosophers", href: "/philosophers/" }, { label: "Voices of the Inventors", href: "/inventors/" }, { label: "Voices of the Explorers", href: "/explorers/" }],
+  roundtables: [
+    { title: "A national bank", ids: ["hamilton", "jefferson"], question: "Should the new nation have a national bank?" },
+    { title: "A bill of rights", ids: ["madison", "henry", "jefferson"], question: "Does the Constitution need a bill of rights, and why?" },
+    { title: "Remember the ladies", ids: ["abigail", "adams"], question: "What should the new laws owe to women?" },
+  ],
+  greeting: (f) => `Good day. I'm ${f.name}. What would you like to talk about? I'll answer you from my own letters, papers and speeches.`,
   theme: {
     ink: "#100C06", deep: "#1A1208", raise: "#2A1E0E", paper: "#F5EDD6",
     muted: "rgba(245,237,214,0.74)", faint: "rgba(245,237,214,0.5)", line: "rgba(184,137,42,0.24)",

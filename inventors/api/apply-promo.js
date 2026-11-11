@@ -1,5 +1,18 @@
-// POST /api/apply-promo — redeems a Voices promo code for the signed-in visitor.
+// POST /api/apply-promo — redeems a Voices promo code, or joins a class or co-op code, for the signed-in visitor.
 import { admin, getUser, accessFor, readJson } from './_lib.js';
+
+const GROUP_ERRORS = {
+  full: 'This class code has no seats left. Ask your teacher or co-op leader for help.',
+  expired: 'This class code has ended.',
+  not_started: 'This class code isn’t open yet.',
+};
+
+async function joinGroup(code, user, email) {
+  const { data, error } = await admin.rpc('vah_join_group', { p_code: code, p_email: email, p_user: user.id });
+  if (error || !data) return null; // group tables not set up yet, or no such code
+  if (data.error === 'invalid') return null;
+  return data;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -9,7 +22,13 @@ export default async function handler(req, res) {
   if (!code) return res.status(400).json({ error: 'Please enter a promo code.' });
 
   const { data: promo } = await admin.from('vah_promo_codes').select('*').eq('code', code).eq('is_active', true).maybeSingle();
-  if (!promo) return res.status(404).json({ error: 'That code isn’t valid.' });
+  if (!promo) {
+    const email = user.email.toLowerCase().trim();
+    const joined = await joinGroup(code, user, email);
+    if (!joined) return res.status(404).json({ error: 'That code isn’t valid.' });
+    if (joined.error) return res.status(410).json({ error: GROUP_ERRORS[joined.error] || 'That code can’t be used right now.' });
+    return res.status(200).json({ access: await accessFor(user), joined: { name: joined.name, kind: joined.kind } });
+  }
   if (promo.expires_at && new Date(promo.expires_at) < new Date()) return res.status(410).json({ error: 'This code has expired.' });
   if (promo.max_uses !== null && promo.uses_count >= promo.max_uses) return res.status(410).json({ error: 'This code has reached its usage limit.' });
 

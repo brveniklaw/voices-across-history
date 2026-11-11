@@ -55,6 +55,7 @@ export default function AdminApp() {
       <main style={{ flex: 1, overflow: "auto", minWidth: 0 }}>
         {view === "subscribers"  && <SubscribersView />}
         {view === "promos"       && <PromosView />}
+        {view === "groups"       && <GroupsView />}
         {view === "messages"     && <MessagesView setUnreadCount={setUnreadCount} />}
         {view === "feedback"     && <FeedbackView />}
         {view === "health"       && <HealthView />}
@@ -107,6 +108,7 @@ function Sidebar({ view, setView, unreadCount }) {
   const items = [
     { id: "subscribers", label: "Subscribers",    icon: "👥" },
     { id: "promos",      label: "Promo Codes",    icon: "🎫" },
+    { id: "groups",      label: "Class Codes",    icon: "🎓" },
     { id: "messages",    label: "Messages",       icon: "✉️", badge: unreadCount },
     { id: "feedback",    label: "Feedback",       icon: "⭐" },
     { id: "health",      label: "Platform Health",icon: "🩺" },
@@ -260,7 +262,7 @@ function PromosView() {
   const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ code: "", type: "trial_7day", maxUses: "1", unlimited: false, expiresAt: "", never: true, note: "" });
+  const [form, setForm] = useState({ code: "", type: "trial", maxUses: "1", unlimited: false, expiresAt: "", never: true, note: "" });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -279,7 +281,7 @@ function PromosView() {
       note: form.note.trim()
     };
     const data = await apiFetch("/api/promos", { method: "POST", body: JSON.stringify(body) });
-    if (data.success) { setShowForm(false); setForm({ code: "", type: "trial_7day", maxUses: "1", unlimited: false, expiresAt: "", never: true, note: "" }); load(); }
+    if (data.success) { setShowForm(false); setForm({ code: "", type: "trial", maxUses: "1", unlimited: false, expiresAt: "", never: true, note: "" }); load(); }
     else setFormError(data.error || "Error creating code.");
     setSaving(false);
   }
@@ -312,7 +314,7 @@ function PromosView() {
             </Field>
             <Field label="Type">
               <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))} style={inputStyle}>
-                <option value="trial_7day">7-Day Trial</option>
+                <option value="trial">7-Day Trial</option>
                 <option value="permanent">Permanent Access</option>
               </select>
             </Field>
@@ -373,6 +375,107 @@ function PromosView() {
           </table>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── CLASS & CO-OP CODES VIEW ──────────────────────────────────────────────────
+function GroupsView() {
+  const apiFetch = useApi();
+  const blank = { name: "", kind: "class", leader: "", seats: "25", code: "", expiresAt: "", never: true, note: "" };
+  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [notReady, setNotReady] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(blank);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const load = () => apiFetch("/api/groups").then(d => { setGroups(d.groups || []); setNotReady(!!d.notReady); setLoading(false); });
+  useEffect(() => { load(); }, []);
+
+  async function create(e) {
+    e.preventDefault();
+    setSaving(true); setFormError("");
+    const data = await apiFetch("/api/groups", { method: "POST", body: JSON.stringify({
+      name: form.name, kind: form.kind, leader_email: form.leader, seats: form.seats, code: form.code,
+      expires_at: form.never ? null : form.expiresAt || null, note: form.note.trim(),
+    }) });
+    if (data.success) { setShowForm(false); setForm(blank); load(); }
+    else setFormError(data.error || "Error creating code.");
+    setSaving(false);
+  }
+
+  async function toggle(g) {
+    await apiFetch("/api/groups", { method: "PATCH", body: JSON.stringify({ id: g.id, is_active: !g.is_active }) });
+    load();
+  }
+
+  return (
+    <div>
+      <ViewHeader
+        title="Class Codes"
+        subtitle="One code per class or co-op. Members get access, and the leader can read their conversations."
+        action={!notReady && <button onClick={() => setShowForm(!showForm)} style={btnStyle}>{showForm ? "Cancel" : "+ New Class Code"}</button>}
+      />
+      {notReady && <Empty msg="Class codes need the database update (vah_class_codes migration) applied before they can be created." />}
+
+      {showForm && (
+        <form onSubmit={create} style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, margin: "1rem 2rem", padding: "1.5rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: "1rem" }}>
+            <Field label="Name *"><input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Ms. Rivera's 8th grade history" style={inputStyle} /></Field>
+            <Field label="Kind">
+              <select value={form.kind} onChange={e => setForm(p => ({ ...p, kind: e.target.value }))} style={inputStyle}>
+                <option value="class">Class</option>
+                <option value="coop">Co-op</option>
+              </select>
+            </Field>
+            <Field label="Leader email *"><input type="email" value={form.leader} onChange={e => setForm(p => ({ ...p, leader: e.target.value }))} placeholder="teacher@school.org" style={inputStyle} /></Field>
+            <Field label="Seats *"><input type="number" min="1" max="500" value={form.seats} onChange={e => setForm(p => ({ ...p, seats: e.target.value }))} style={inputStyle} /></Field>
+            <Field label="Code"><input value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="Leave blank to generate" style={inputStyle} /></Field>
+            <Field label="Ends">
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <input type="date" value={form.expiresAt} onChange={e => setForm(p => ({ ...p, expiresAt: e.target.value }))} disabled={form.never} style={{ ...inputStyle, flex: 1 }} />
+                <label style={{ fontSize: 13, color: T.textMuted, display: "flex", alignItems: "center", gap: "0.3rem", cursor: "pointer" }}>
+                  <input type="checkbox" checked={form.never} onChange={e => setForm(p => ({ ...p, never: e.target.checked }))} /> Never
+                </label>
+              </div>
+            </Field>
+            <Field label="Note" style={{ gridColumn: "1 / -1" }}><input value={form.note} onChange={e => setForm(p => ({ ...p, note: e.target.value }))} placeholder="Internal memo (optional)" style={inputStyle} /></Field>
+          </div>
+          {formError && <p style={{ color: T.red, fontSize: 13, marginTop: "0.8rem" }}>{formError}</p>}
+          <div style={{ marginTop: "1.2rem", display: "flex", gap: "0.5rem" }}>
+            <button type="submit" disabled={saving} style={btnStyle}>{saving ? "Creating…" : "Create Code"}</button>
+            <button type="button" onClick={() => setShowForm(false)} style={ghostBtnStyle}>Cancel</button>
+          </div>
+        </form>
+      )}
+
+      {!notReady && (
+        <div style={{ padding: "0.5rem 2rem 2rem", overflow: "auto" }}>
+          {loading ? <Loading /> : groups.length === 0 ? <Empty msg="No class codes yet." /> : (
+            <table style={tableStyle}>
+              <thead><tr style={{ borderBottom: `1px solid ${T.border}` }}>
+                {["Code","Name","Kind","Leader","Seats","Ends","Active","Actions"].map(h => <th key={h} style={thStyle}>{h}</th>)}
+              </tr></thead>
+              <tbody>
+                {groups.map((g) => (
+                  <tr key={g.id} style={trStyle}>
+                    <td style={{ ...tdStyle, fontFamily: "monospace", fontWeight: 600, color: T.goldLt }}>{g.code}</td>
+                    <td style={tdStyle}>{g.name}</td>
+                    <td style={tdStyle}><span style={T.pill(g.kind === "coop" ? T.orange : T.blue)}>{g.kind === "coop" ? "Co-op" : "Class"}</span></td>
+                    <td style={{ ...tdStyle, color: T.textMuted }}>{g.leader_email}</td>
+                    <td style={tdStyle}>{g.seats_used} / {g.seats}</td>
+                    <td style={tdStyle}><Dt val={g.expires_at} fallback="Never" /></td>
+                    <td style={tdStyle}><span style={T.pill(g.is_active ? T.green : T.red)}>{g.is_active ? "Active" : "Inactive"}</span></td>
+                    <td style={tdStyle}><button onClick={() => toggle(g)} style={{ ...ghostBtnStyle, fontSize: 11, padding: "3px 8px" }}>{g.is_active ? "Disable" : "Enable"}</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
     </div>
   );
 }

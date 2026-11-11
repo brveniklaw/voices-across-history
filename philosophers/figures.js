@@ -13,8 +13,13 @@ export const COLLECTION = {
   legacyHosts: ["voices-of-the-philosophers.vercel.app"],
   filterBy: "era",
   sectionLabel: "The Philosophers",
-  otherCollections: [{ label: "Voices of the Republic", href: "/republic/" }, { label: "Voices of the Inventors", href: "/inventors/" }],
-  greeting: (f) => `I am ${f.name}. Let us reason together. Ask what you will, and I shall answer as my own writings allow.`,
+  otherCollections: [{ label: "Voices of the Republic", href: "/republic/" }, { label: "Voices of the Inventors", href: "/inventors/" }, { label: "Voices of the Explorers", href: "/explorers/" }],
+  roundtables: [
+    { title: "Where society comes from", ids: ["locke", "rousseau", "hume"], question: "What gives a government the right to rule?" },
+    { title: "Duty or consequences", ids: ["kant", "mill"], question: "Is it ever right to lie to prevent a harm?" },
+    { title: "The good life", ids: ["socrates", "epictetus", "nietzsche"], question: "What makes a life well lived?" },
+  ],
+  greeting: (f) => `Welcome. I'm ${f.name}. Let's reason this through together. What's on your mind? I'll answer as my own writings allow.`,
   theme: {
     ink: "#12161B", deep: "#181E25", raise: "#232B35", paper: "#E9E6DF",
     muted: "rgba(233,230,223,0.74)", faint: "rgba(233,230,223,0.5)", line: "rgba(233,230,223,0.13)",

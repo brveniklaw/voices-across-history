@@ -1,0 +1,27 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/explorers/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/explorers/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/explorers",
+      "destination": "/explorers/index.html"
+    },
+    {
+      "source": "/explorers/:path*",
+      "destination": "/explorers/index.html"
+    }
+  ]
+}

@@ -59,10 +59,10 @@ function pickVoice(profile = {}) {
   return null;
 }
 
-function speakText(text, voiceProfile = {}, onEnd) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
+function speakText(text, voiceProfile = {}, onEnd, { queue = false } = {}) {
+  if (!window.speechSynthesis) { onEnd && onEnd(); return; }
+  if (!queue) window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(forSpeech(text));
   const chosen = pickVoice(voiceProfile);
   if (chosen) { utter.voice = chosen; utter.lang = chosen.lang; } else { utter.lang = voiceProfile.lang === "en-GB-scotland" ? "en-GB" : (voiceProfile.lang || "en-US"); }
   utter.pitch = voiceProfile.pitch || 1;
@@ -70,10 +70,51 @@ function speakText(text, voiceProfile = {}, onEnd) {
   utter.onend = onEnd || null;
   window.speechSynthesis.speak(utter);
 }
-const stopSpeech = () => window.speechSynthesis && window.speechSynthesis.cancel();
+const stopSpeech = () => window.speechSynthesis && window.speechSynthesis.cancel(); // onend clears the lit portrait
+
+// Replies are written as plain spoken prose, but a stray bit of formatting can still slip through.
+// tidyReply cleans what's shown on screen; forSpeech also turns symbols the device voice would
+// otherwise read aloud ("asterisk", "dash", "slash") into natural pauses or words.
+function tidyReply(text = "") {
+  return String(text)
+    .replace(/\r/g, "")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")                 // headings
+    .replace(/\*\*([^*]+)\*\*|__([^_]+)__/g, "$1$2")     // bold
+    .replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, "$1$2")     // italics with *
+    .replace(/(^|\s)_([^_\n]+)_(?=\s|[.,;:!?]|$)/g, "$1$2") // italics with _
+    .replace(/^\s*[-*•]\s+/gm, "")                       // bullet markers
+    .replace(/^\s*\d+[.)]\s+(?=\S)/gm, "")                // numbered list markers
+    .replace(/^\s*>\s?/gm, "")                           // block quotes
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")             // links
+    .replace(/\*{1,3}|_{2,}/g, "")                        // leftover emphasis marks
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function forSpeech(text = "") {
+  return tidyReply(text)
+    .replace(/\(([^)]*)\)/g, ", $1,")                     // asides in brackets become spoken asides
+    .replace(/\s*[—–]\s*/g, ", ")                         // em and en dashes become pauses
+    .replace(/\s+-{1,2}\s+/g, ", ")                       // spaced hyphens used as dashes
+    .replace(/(\d)\s*[–-]\s*(\d)/g, "$1 to $2")           // 1787–1788 → 1787 to 1788
+    .replace(/&/g, " and ")
+    .replace(/\s\/\s|(?<=[A-Za-z])\/(?=[A-Za-z])/g, " or ")   // and/or, Socrates / Plato
+    .replace(/…|\.{3,}/g, ".")
+    .replace(/["“”«»]/g, "")
+    .replace(/[;:]\s*/g, ", ")
+    .replace(/\s*\n+\s*/g, " ")
+    .replace(/,\s*([,.!?])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
 
 const initials = (name) => { const w = name.replace(/[^A-Za-z ]/g, " ").split(/\s+/).filter((x) => /^[A-Z]/.test(x)); return w.length > 1 ? w[0][0] + w[w.length - 1][0] : (w[0] || "?")[0]; };
 const speakerName = (f) => f.short || f.name.split(" / ")[0].split(" ").slice(-1)[0];
+const groupWord = (g) => (g?.kind === "coop" ? "co-op" : "class");
+const newRoundId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+const listNames = (names) => (names.length < 3 ? names.join(" and ") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`);
 
 function daysLeft(iso) {
   if (!iso) return null;
@@ -96,7 +137,7 @@ export default function VoicesApp({ collection: C, figures }) {
   const T = C.theme;
   const isMobile = useMobile();
 
-  const [view, setView] = useState("landing"); // landing | auth | join | gallery | chat
+  const [view, setView] = useState("landing"); // landing | auth | join | gallery | chat | roundtable | class
   const [session, setSession] = useState(null);
   const [access, setAccess] = useState(null);
   const [checking, setChecking] = useState(true);
@@ -124,9 +165,27 @@ export default function VoicesApp({ collection: C, figures }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [saying, setSaying] = useState(null); // key of the answer being read aloud
+  const say = (key, text, profile, opts) => {
+    setSpeaking(true); setSaying(key);
+    speakText(text, profile, () => { setSpeaking(false); setSaying(null); opts?.done && opts.done(); }, opts);
+  };
   const [listening, setListening] = useState(false);
+  const [today, setToday] = useState(false); // "Today's issues" mode
   const endRef = useRef(null);
   const recogRef = useRef(null);
+
+  // roundtable
+  const [picking, setPicking] = useState(false);
+  const [panel, setPanel] = useState([]); // figure ids, 2–3
+  const [table, setTable] = useState([]); // [{ speaker: "visitor" | figureId, text, system? }]
+  const [turnOf, setTurnOf] = useState(null); // figure currently answering
+  const speechChain = useRef(Promise.resolve());
+
+  // class & co-op leader page
+  const [groupData, setGroupData] = useState(null);
+  const [groupErr, setGroupErr] = useState("");
+  const [openStudent, setOpenStudent] = useState(null);
 
   const token = session?.access_token;
 
@@ -173,7 +232,7 @@ export default function VoicesApp({ collection: C, figures }) {
     return () => sub.subscription.unsubscribe();
   }, [refreshAccess]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading, table, turnOf]);
   useEffect(() => { if (window.speechSynthesis) window.speechSynthesis.getVoices(); }, []);
 
   // ── NAVIGATION ──────────────────────────────────────────────────────────────
@@ -247,12 +306,18 @@ export default function VoicesApp({ collection: C, figures }) {
     setJoinErr(""); setJoinBusy(true);
     const { data } = await api("apply-promo", { method: "POST", token, body: { code: promo.trim() } });
     setJoinBusy(false);
-    if (data.access) { setAccess(data.access); if (data.access.active) setView("gallery"); return; }
+    if (data.access) {
+      setAccess(data.access);
+      if (data.joined) setNotice(`You've joined ${data.joined.name}. Your ${data.joined.kind === "coop" ? "co-op" : "class"} leader can read the conversations you have here.`);
+      if (data.access.active) setView("gallery");
+      return;
+    }
     setJoinErr(data.error || "That code isn't valid.");
   }
 
   // ── CHAT ────────────────────────────────────────────────────────────────────
   function openFigure(f) {
+    setToday(false);
     setActive(f);
     setMessages([{ role: "assistant", text: C.greeting(f) }]);
     setView("chat");
@@ -267,13 +332,12 @@ export default function VoicesApp({ collection: C, figures }) {
     const { ok, status, data } = await api("chat", {
       method: "POST",
       token,
-      body: { figureId: active.id, messages: next.map((m) => ({ role: m.role, content: m.text })) },
+      body: { figureId: active.id, mode: today ? "today" : "record", messages: next.map((m) => ({ role: m.role, content: m.text })) },
     });
     setLoading(false);
     if (ok) {
-      setMessages((prev) => [...prev, { role: "assistant", text: data.text }]);
-      setSpeaking(true);
-      speakText(data.text, active.voiceProfile, () => setSpeaking(false));
+      setMessages((prev) => [...prev, { role: "assistant", text: data.text, sources: data.sources || [], today: data.mode === "today" }]);
+      say(`c${next.length}`, data.text, active.voiceProfile);
       return;
     }
     let reply = "Forgive me — I am presently unable to respond. Please try again.";
@@ -281,7 +345,7 @@ export default function VoicesApp({ collection: C, figures }) {
     if (status === 402) { await refreshAccess(token); setView("join"); return; }
     if (status === 429) reply = `You've reached today's limit of ${data.limit || 100} messages. Conversations reopen at midnight (Eastern).`;
     setMessages((prev) => [...prev, { role: "assistant", text: reply, system: true }]);
-  }, [messages, active, loading, token, refreshAccess]);
+  }, [messages, active, loading, token, refreshAccess, today]);
 
   const startListening = useCallback(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -297,6 +361,69 @@ export default function VoicesApp({ collection: C, figures }) {
     setListening(true);
   }, []);
   const stopListening = useCallback(() => { recogRef.current?.stop(); setListening(false); }, []);
+
+  // ── ROUNDTABLE ──────────────────────────────────────────────────────────────
+  const byId = (id) => figures.find((f) => f.id === id);
+
+  function togglePick(f) {
+    setPanel((p) => (p.includes(f.id) ? p.filter((x) => x !== f.id) : p.length >= 3 ? p : [...p, f.id]));
+  }
+
+  function openRoundtable(ids, question) {
+    stopSpeech();
+    setToday(false);
+    speechChain.current = Promise.resolve();
+    const names = ids.map((id) => byId(id)?.name).filter(Boolean);
+    setPanel(ids);
+    setPicking(false);
+    setTable([{ speaker: "host", text: `${listNames(names)} have taken their seats. Put a question to the table, and each will answer in turn, responding to the others where their writings agree or differ.` }]);
+    setInput(question || "");
+    setView("roundtable");
+  }
+
+  function queueSpeech(key, text, profile) {
+    speechChain.current = speechChain.current.then(() => new Promise((done) => {
+      say(key, text, profile, { queue: true, done });
+    }));
+  }
+
+  const askTable = useCallback(async (text) => {
+    if (!text.trim() || turnOf || panel.length < 2) return;
+    const roundId = newRoundId();
+    let lines = [...table, { speaker: "visitor", text: text.trim() }];
+    setTable(lines);
+    setInput("");
+    for (const id of panel) {
+      const f = byId(id);
+      setTurnOf(f);
+      const { ok, status, data } = await api("roundtable", {
+        method: "POST",
+        token,
+        body: { figureId: id, panel, roundId, mode: today ? "today" : "record", transcript: lines.filter((l) => !l.system && l.speaker !== "host").map((l) => ({ speaker: l.speaker, text: l.text })) },
+      });
+      if (!ok) {
+        setTurnOf(null);
+        if (status === 402) { await refreshAccess(token); setView("join"); return; }
+        let msg = "The table has fallen quiet. Please try again.";
+        if (status === 401) msg = "Your session has ended. Please sign in again to continue.";
+        if (status === 429) msg = `You've reached today's limit of ${data.limit || 100} messages. Each voice's answer counts as one. Conversations reopen at midnight (Eastern).`;
+        setTable((prev) => [...prev, { speaker: "host", text: msg, system: true }]);
+        return;
+      }
+      lines = [...lines, { speaker: id, text: data.text, sources: data.sources || [], today: data.mode === "today" }];
+      setTable(lines);
+      queueSpeech(`r${lines.length - 1}`, data.text, f.voiceProfile);
+    }
+    setTurnOf(null);
+  }, [table, panel, turnOf, token, refreshAccess, today]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── CLASS / CO-OP LEADER PAGE ───────────────────────────────────────────────
+  async function openClass() {
+    setGroupErr(""); setGroupData(null); setOpenStudent(null);
+    setView("class");
+    const { ok, data } = await api("group", { token });
+    if (ok) setGroupData(data); else setGroupErr(data.error || "This page couldn't load. Please try again.");
+  }
 
   // ── SHARED PIECES ───────────────────────────────────────────────────────────
   const vars = {
@@ -316,7 +443,7 @@ export default function VoicesApp({ collection: C, figures }) {
     const trialDays = access?.active && (access.access_type === "trial" || access.access_type === "promo_trial") ? daysLeft(access.trial_expires_at) : null;
     const plates = figures.slice(0, isMobile ? 6 : 9);
     return (
-      <Shell vars={vars} className="vx-landing">
+      <Shell vars={vars} era={C.id} className="vx-landing">
         <TopBar right={session ? account() : !checking && <button className="vx-link" onClick={() => { setMode("signin"); setView("auth"); }}>Sign in</button>} />
         <main className="vx-hero">
           <section className="vx-hero-copy">
@@ -337,6 +464,7 @@ export default function VoicesApp({ collection: C, figures }) {
             </div>
             {trialDays !== null && <p className="vx-status">Free trial: {trialDays} day{trialDays === 1 ? "" : "s"} left</p>}
             {access?.staff && <p className="vx-status">IntexiaU staff access</p>}
+            {access?.access_type === "group" && access.group && <p className="vx-status">Access through {access.group.name}</p>}
           </section>
           <section className="vx-mosaic" aria-label={`Figures in ${C.name}`}>
             {plates.map((f, i) => (
@@ -364,7 +492,7 @@ export default function VoicesApp({ collection: C, figures }) {
       newpass: "Enter a new password for your account.",
     };
     return (
-      <Shell vars={vars} className="vx-center">
+      <Shell vars={vars} era={C.id} className="vx-center">
         <TopBar left={<button className="vx-link" onClick={() => setView("landing")}>Back</button>} />
         <form className="vx-panel" onSubmit={submitAuth}>
           <p className="vx-kicker">{C.name}</p>
@@ -399,7 +527,7 @@ export default function VoicesApp({ collection: C, figures }) {
   if (view === "join") {
     const ended = access && !access.is_new && !access.active;
     return (
-      <Shell vars={vars} className="vx-center">
+      <Shell vars={vars} era={C.id} className="vx-center">
         <TopBar left={<button className="vx-link" onClick={() => setView("landing")}>Back</button>} right={account()} />
         <div className="vx-panel">
           <p className="vx-kicker">{C.name}</p>
@@ -418,10 +546,10 @@ export default function VoicesApp({ collection: C, figures }) {
             {joinBusy ? "Opening secure checkout…" : ended ? "Subscribe for $9.99 a month" : "Start free trial"}
           </button>
           {!showPromo ? (
-            <button className="vx-link vx-center-text" onClick={() => setShowPromo(true)}>Have a promo code?</button>
+            <button className="vx-link vx-center-text" onClick={() => setShowPromo(true)}>Have a promo or class code?</button>
           ) : (
             <form className="vx-inline" onSubmit={redeem}>
-              <input aria-label="Promo code" placeholder="Promo code" value={promo} onChange={(e) => setPromo(e.target.value.toUpperCase())} />
+              <input aria-label="Promo or class code" placeholder="Promo or class code" value={promo} onChange={(e) => setPromo(e.target.value.toUpperCase())} />
               <button className="vx-btn vx-btn-quiet" disabled={joinBusy}>Apply</button>
             </form>
           )}
@@ -436,13 +564,35 @@ export default function VoicesApp({ collection: C, figures }) {
     const shown = filters && filter !== "All" ? figures.filter((f) => f[C.filterBy] === filter) : figures;
     const sections = C.sections || [{ label: C.sectionLabel || "The collection", match: () => true }];
     return (
-      <Shell vars={vars}>
+      <Shell vars={vars} era={C.id}>
         <TopBar left={<button className="vx-link" onClick={() => setView("landing")}>{C.titleBottom}</button>} right={account()} />
         <main className="vx-gallery">
           <div className="vx-gallery-head">
-            <h1 className="vx-h1">Choose a voice</h1>
-            <p className="vx-muted">Every answer is grounded in the figure's own writings. Tap a portrait to begin.</p>
+            <h1 className="vx-h1">{picking ? "Seat your roundtable" : "Choose a voice"}</h1>
+            <p className="vx-muted">
+              {picking
+                ? "Choose two or three voices. Each will answer your question in turn and respond to the others."
+                : "Every answer is grounded in the figure's own writings. Tap a portrait to begin, or seat a roundtable to hear several voices take up one question."}
+            </p>
             {notice && <div className="vx-note vx-note-ok">{notice}</div>}
+            <div className="vx-actions">
+              {!picking ? (
+                <button className="vx-btn vx-btn-quiet" onClick={() => { setPanel([]); setPicking(true); }}>Start a roundtable</button>
+              ) : (
+                <button className="vx-btn vx-btn-quiet" onClick={() => { setPicking(false); setPanel([]); }}>Cancel roundtable</button>
+              )}
+              {access?.group?.role === "leader" && <button className="vx-btn vx-btn-quiet" onClick={openClass}>Your {groupWord(access.group)}</button>}
+            </div>
+            {!picking && (C.roundtables || []).length > 0 && (
+              <div className="vx-suggest" aria-label="Suggested roundtables">
+                {C.roundtables.filter((r) => r.ids.every(byId)).map((r) => (
+                  <button key={r.title} className="vx-suggest-card" onClick={() => openRoundtable(r.ids, r.question)}>
+                    <span className="vx-suggest-title">{r.title}</span>
+                    <span className="vx-suggest-who">{listNames(r.ids.map((id) => speakerName(byId(id))))}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {filters && (
               <div className="vx-chips" role="group" aria-label="Filter by era">
                 {filters.map((f) => <button key={f} aria-pressed={filter === f} onClick={() => setFilter(f)}>{f}</button>)}
@@ -457,7 +607,15 @@ export default function VoicesApp({ collection: C, figures }) {
                 {sections.length > 1 && <h2 className="vx-section-title">{sec.label}{sec.note && <span> {sec.note}</span>}</h2>}
                 <div className="vx-grid">
                   {list.map((f) => (
-                    <button key={f.id} className="vx-card" onClick={() => openFigure(f)} style={{ "--tint": f.color }}>
+                    <button
+                      key={f.id}
+                      className={`vx-card ${picking && panel.includes(f.id) ? "is-picked" : ""}`}
+                      onClick={() => (picking ? togglePick(f) : openFigure(f))}
+                      aria-pressed={picking ? panel.includes(f.id) : undefined}
+                      disabled={picking && !panel.includes(f.id) && panel.length >= 3}
+                      style={{ "--tint": f.color }}
+                    >
+                      {picking && panel.includes(f.id) && <span className="vx-pick-badge" aria-hidden="true">{panel.indexOf(f.id) + 1}</span>}
                       <Plate f={f} />
                       <span className="vx-card-body">
                         <span className="vx-card-name">{f.name}</span>
@@ -471,9 +629,163 @@ export default function VoicesApp({ collection: C, figures }) {
             );
           })}
         </main>
+        {picking && (
+          <div className="vx-pickbar" role="status">
+            <span>{panel.length ? listNames(panel.map((id) => speakerName(byId(id)))) : "No voices chosen yet"}</span>
+            <button className="vx-btn" disabled={panel.length < 2} onClick={() => openRoundtable(panel)}>
+              {panel.length < 2 ? `Choose ${2 - panel.length} more` : "Begin the roundtable"}
+            </button>
+          </div>
+        )}
         <footer className="vx-foot">
           {(C.otherCollections || []).map((o) => <a key={o.href} href={o.href} className="vx-link">{o.label}</a>)}
         </footer>
+      </Shell>
+    );
+  }
+
+  // ── VIEW: ROUNDTABLE ────────────────────────────────────────────────────────
+  if (view === "roundtable" && panel.length >= 2) {
+    const seated = panel.map(byId).filter(Boolean);
+    const live = !!turnOf || speaking;
+    const nameFor = (sp) => (sp === "visitor" ? "You" : speakerName(byId(sp) || { name: "" }));
+    const voiceSpeaker = saying && saying[0] === "r" ? table[Number(saying.slice(1))]?.speaker : null;
+    return (
+      <Shell vars={vars} era={C.id} className="vx-chat">
+        <TopBar left={<button className="vx-link" onClick={() => { stopSpeech(); setTurnOf(null); setView("gallery"); }}>All voices</button>} right={account()} />
+        <div className="vx-rt-wrap">
+          <header className="vx-rt-head">
+            <p className="vx-kicker">Roundtable</p>
+            <div className={`vx-table n${seated.length}`} role="group" aria-label="Seated at the table">
+              <div className="vx-table-top" aria-hidden="true"><span /></div>
+              {seated.map((f, i) => {
+                const thinking = turnOf?.id === f.id;
+                const voicing = voiceSpeaker === f.id;
+                return (
+                  <div key={f.id} className={`vx-seat s${i} ${thinking ? "is-turn" : ""} ${voicing ? "is-voice" : ""}`} style={{ "--tint": f.color }}>
+                    <span className="vx-seat-face"><Plate f={f} /></span>
+                    <span className="vx-rt-name">{f.short || f.name}</span>
+                    <span className="vx-rt-years">{thinking ? "Thinking" : voicing ? "Speaking" : f.years}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </header>
+          <section className="vx-convo" aria-label="Roundtable conversation">
+            <div className={`vx-voiceprint ${live ? "is-live" : ""}`} aria-hidden="true">
+              {Array.from({ length: 64 }).map((_, i) => <span key={i} style={{ animationDelay: `${(i * 53) % 900}ms` }} />)}
+            </div>
+            <p className="vx-live-label" aria-live="polite">{turnOf ? `${speakerName(turnOf)} is considering the question…` : speaking ? "The table is speaking" : " "}</p>
+            <div className="vx-transcript">
+              {table.map((m, i) =>
+                m.speaker === "visitor" ? (
+                  <div key={i} className="vx-q"><p>{m.text}</p></div>
+                ) : m.speaker === "host" ? (
+                  <p key={i} className={`vx-rt-host ${m.system ? "is-system" : ""}`}>{m.text}</p>
+                ) : (
+                  <div key={i} className={`vx-a is-page ${saying === `r${i}` ? "is-saying" : ""}`} style={{ "--tint": byId(m.speaker)?.color || undefined }}>
+                    <div className="vx-a-head">
+                      {byId(m.speaker) && <span className="vx-a-face"><Plate f={byId(m.speaker)} /></span>}
+                      <span className="vx-a-who">{nameFor(m.speaker)}</span>
+                      <button className="vx-icon" onClick={() => say(`r${i}`, m.text, byId(m.speaker)?.voiceProfile)} aria-label="Read aloud" title="Read aloud">
+                        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round"/></svg>
+                      </button>
+                    </div>
+                    {m.today && <p className="vx-today-tag">Today's issue: an interpretation from {byId(m.speaker)?.name}'s writings, not a view they held</p>}
+                    <p className="vx-a-text">{tidyReply(m.text)}</p>
+                    <Cites list={m.sources} f={byId(m.speaker)} />
+                  </div>
+                )
+              )}
+              {turnOf && <div className="vx-a"><div className="vx-a-head"><span className="vx-a-who">{speakerName(turnOf)}</span></div><div className="vx-dots"><span /><span /><span /></div></div>}
+              <div ref={endRef} />
+            </div>
+            <div className="vx-dock">
+            <ModeSwitch today={today} setToday={setToday} onPick={(q) => setInput(q)} />
+            <div className="vx-composer">
+              <button
+                className={`vx-mic ${listening ? "is-on" : ""}`}
+                onMouseDown={startListening} onMouseUp={stopListening} onTouchStart={startListening} onTouchEnd={stopListening}
+                aria-label={listening ? "Listening" : "Hold to speak"} title={listening ? "Listening…" : "Hold to speak"}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round"/></svg>
+              </button>
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askTable(input); } }}
+                placeholder={today ? "Put an issue of our time to the table" : "Put a question to the table"}
+                rows={2}
+                aria-label="Put a question to the table"
+              />
+              <button className="vx-btn vx-send" onClick={() => askTable(input)} disabled={!!turnOf || !input.trim()}>Ask</button>
+            </div>
+            </div>
+            <p className="vx-fine vx-center-text">
+              AI interpretations for learning, each grounded in that figure's documented writings. Each voice's answer counts as one message.
+              {access?.group?.role === "member" && ` Your ${groupWord(access.group)} leader can read this conversation.`}
+            </p>
+          </section>
+        </div>
+      </Shell>
+    );
+  }
+
+  // ── VIEW: CLASS / CO-OP (leader) ────────────────────────────────────────────
+  if (view === "class") {
+    const g = groupData?.group;
+    const word = g?.kind === "coop" ? "co-op" : "class";
+    const turns = groupData?.turns || [];
+    const members = groupData?.members || [];
+    const countFor = (email) => turns.filter((t) => t.email === email).length;
+    const shown = openStudent ? turns.filter((t) => t.email === openStudent) : [];
+    const figureLabel = (t) => (t.app === C.id ? byId(t.figure_id)?.name : null) || t.figure_id.replace(/_/g, " ");
+    return (
+      <Shell vars={vars} era={C.id}>
+        <TopBar left={<button className="vx-link" onClick={() => setView("gallery")}>All voices</button>} right={account()} />
+        <main className="vx-gallery">
+          {!groupData && !groupErr && <p className="vx-muted">Loading…</p>}
+          {groupErr && <div className="vx-note vx-note-err">{groupErr}</div>}
+          {g && (
+            <>
+              <div className="vx-gallery-head">
+                <p className="vx-kicker">Your {word}</p>
+                <h1 className="vx-h1">{g.name}</h1>
+                <p className="vx-muted">
+                  Share the code <strong className="vx-code">{g.code}</strong> with your {word === "co-op" ? "families" : "students"}. They enter it under "Have a promo or class code?" after creating their account.
+                  {" "}{members.length} of {g.seats} seats taken{g.expires_at ? `, open until ${new Date(g.expires_at).toLocaleDateString()}` : ""}.
+                </p>
+              </div>
+              {members.length === 0 ? (
+                <p className="vx-muted">No one has joined yet.</p>
+              ) : (
+                <div className="vx-class">
+                  <ul className="vx-roster" aria-label="Members">
+                    {members.map((m) => (
+                      <li key={m.email}>
+                        <button aria-pressed={openStudent === m.email} onClick={() => setOpenStudent(openStudent === m.email ? null : m.email)}>
+                          <span>{m.email}</span>
+                          <span className="vx-faint">{countFor(m.email)} answers</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <section className="vx-class-log" aria-label="Conversations">
+                    {!openStudent && <p className="vx-muted">Choose a member to read their recent conversations across every collection.</p>}
+                    {openStudent && shown.length === 0 && <p className="vx-muted">No conversations yet.</p>}
+                    {shown.map((t) => (
+                      <article key={t.id} className="vx-log-item">
+                        <p className="vx-log-meta">{new Date(t.created_at).toLocaleString()} · {t.app} · {figureLabel(t)}{t.round_id ? " · roundtable" : ""}</p>
+                        <p className="vx-log-q">{t.question}</p>
+                        <p className="vx-log-a">{tidyReply(t.answer)}</p>
+                      </article>
+                    ))}
+                  </section>
+                </div>
+              )}
+            </>
+          )}
+        </main>
       </Shell>
     );
   }
@@ -483,10 +795,10 @@ export default function VoicesApp({ collection: C, figures }) {
     const who = speakerName(active);
     const live = loading || speaking;
     return (
-      <Shell vars={vars} className="vx-chat">
+      <Shell vars={vars} era={C.id} className="vx-chat">
         <TopBar left={<button className="vx-link" onClick={() => { stopSpeech(); setView("gallery"); }}>All voices</button>} right={account()} />
         <div className="vx-chat-wrap">
-          <aside className="vx-dossier">
+          <aside className={`vx-dossier ${live ? "is-live" : ""}`}>
             <Plate f={active} />
             <div className="vx-dossier-body">
               <h1 className="vx-dossier-name">{active.name}</h1>
@@ -507,22 +819,27 @@ export default function VoicesApp({ collection: C, figures }) {
                 m.role === "user" ? (
                   <div key={i} className="vx-q"><p>{m.text}</p></div>
                 ) : (
-                  <div key={i} className={`vx-a ${m.system ? "is-system" : ""}`}>
+                  <div key={i} className={`vx-a ${m.system ? "is-system" : "is-page"} ${saying === `c${i}` ? "is-saying" : ""}`} style={{ "--tint": active.color }}>
                     <div className="vx-a-head">
+                      {!m.system && <span className="vx-a-face"><Plate f={active} /></span>}
                       <span className="vx-a-who">{who}</span>
                       {!m.system && (
-                        <button className="vx-icon" onClick={() => { setSpeaking(true); speakText(m.text, active.voiceProfile, () => setSpeaking(false)); }} aria-label="Read aloud" title="Read aloud">
+                        <button className="vx-icon" onClick={() => say(`c${i}`, m.text, active.voiceProfile)} aria-label="Read aloud" title="Read aloud">
                           <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round"/></svg>
                         </button>
                       )}
                     </div>
-                    <p className="vx-a-text">{m.text}</p>
+                    {m.today && <p className="vx-today-tag">Today's issue: an interpretation from {active.name}'s writings, not a view they held</p>}
+                    <p className="vx-a-text">{m.system ? m.text : tidyReply(m.text)}</p>
+                    <Cites list={m.sources} f={active} />
                   </div>
                 )
               )}
               {loading && <div className="vx-a"><div className="vx-a-head"><span className="vx-a-who">{who}</span></div><div className="vx-dots"><span /><span /><span /></div></div>}
               <div ref={endRef} />
             </div>
+            <div className="vx-dock">
+            <ModeSwitch today={today} setToday={setToday} onPick={(q) => setInput(q)} />
             <div className="vx-composer">
               <button
                 className={`vx-mic ${listening ? "is-on" : ""}`}
@@ -535,15 +852,17 @@ export default function VoicesApp({ collection: C, figures }) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-                placeholder={`Ask ${who} a question`}
+                placeholder={today ? `Ask how ${who} might see an issue of our time` : `Ask ${who} a question`}
                 rows={2}
                 aria-label={`Ask ${who} a question`}
               />
               <button className="vx-btn vx-send" onClick={() => send(input)} disabled={loading || !input.trim()}>Ask</button>
             </div>
+            </div>
             <p className="vx-fine vx-center-text">
               An AI interpretation for learning, grounded in the documented writings of {active.name}. Not the person, and not a direct quotation unless cited.
               {active.limitedRecord && " Limited record: answers stay within verified writings."}
+              {access?.group?.role === "member" && ` Your ${groupWord(access.group)} leader can read this conversation.`}
             </p>
           </section>
         </div>
@@ -554,9 +873,9 @@ export default function VoicesApp({ collection: C, figures }) {
 }
 
 // ── LAYOUT PIECES (module level so inputs keep focus between renders) ────────
-function Shell({ vars, className = "", children }) {
+function Shell({ vars, era, className = "", children }) {
   return (
-    <div className={`vx ${className}`} style={vars}>
+    <div className={`vx vx-era-${era} ${className}`} style={vars}>
       <style>{CSS}</style>
       {children}
     </div>
@@ -570,6 +889,70 @@ function TopBar({ left, right }) {
       <a className="vx-brand" href={`${HUB}/`}>Voices Across History<sup>™</sup></a>
       <div className="vx-top-r">{right}</div>
     </header>
+  );
+}
+
+// ── CITATIONS & MODE SWITCH ───────────────────────────────────────────────────
+function parseCite(c) {
+  const m = String(c).match(/^(.*?)\s*\(([^()]*\d{3,4}[^()]*)\)\s*\.?$/);
+  return m ? { title: m[1].trim(), year: m[2].trim() } : { title: String(c).trim(), year: "" };
+}
+const norm = (t) => t.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+function onList(f, title) {
+  const t = norm(title);
+  return !!(f && t.length > 3 && f.primarySources.some((s) => { const n = norm(s); return n.includes(t) || t.includes(n); }));
+}
+
+function Cites({ list, f }) {
+  const [open, setOpen] = useState(-1);
+  if (!list || !list.length) return null;
+  const items = list.map(parseCite);
+  const it = items[open];
+  return (
+    <div className="vx-cites">
+      <span className="vx-cites-h">Sources</span>
+      <div className="vx-tabs">
+        {items.map((c, k) => (
+          <button key={k} type="button" className="vx-tab" aria-expanded={open === k} onClick={() => setOpen(open === k ? -1 : k)}>
+            <span className="vx-tab-t">{c.title}</span>{c.year && <span className="vx-tab-y">{c.year}</span>}
+          </button>
+        ))}
+      </div>
+      {it && (
+        <div className="vx-slip" role="note">
+          <p className="vx-slip-t">{it.title}</p>
+          {it.year && <p className="vx-slip-y">{it.year}</p>}
+          <p className="vx-slip-n">{onList(f, it.title) ? "On this voice's list of primary sources." : "Named by the AI from the wider record. Check the original before quoting it."}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const TODAY_STARTERS = [
+  "Artificial intelligence and work",
+  "Social media and free speech",
+  "The national debt",
+  "Climate and energy",
+  "What makes a good citizen today?",
+];
+
+function ModeSwitch({ today, setToday, onPick }) {
+  return (
+    <div className="vx-mode">
+      <div className="vx-seg vx-seg-sm" role="radiogroup" aria-label="Kind of question">
+        <button type="button" role="radio" aria-checked={!today} onClick={() => setToday(false)}>From their writings</button>
+        <button type="button" role="radio" aria-checked={today} onClick={() => setToday(true)}>Today's issues</button>
+      </div>
+      {today && (
+        <>
+          <p className="vx-fine vx-mode-note">For questions from our own time. Answers reason from the figure's documented principles, cite them, and lay out the tradeoffs on contested issues rather than taking a side. They're interpretations, not views the figure held.</p>
+          <div className="vx-chips" aria-label="Example issues">
+            {TODAY_STARTERS.map((q) => <button key={q} type="button" onClick={() => onPick(q)}>{q}</button>)}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -593,7 +976,7 @@ function Plate({ f }) {
 // ── STYLES ────────────────────────────────────────────────────────────────────
 const CSS = `
 .vx { --serif: "Newsreader", Georgia, serif; --sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  min-height: 100vh; background: radial-gradient(120% 80% at 85% -10%, var(--raise) 0%, var(--ink) 60%); color: var(--paper);
+  min-height: 100vh; min-height: 100dvh; background: radial-gradient(120% 80% at 85% -10%, var(--raise) 0%, var(--ink) 60%); color: var(--paper);
   font-family: var(--sans); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; display: flex; flex-direction: column; }
 .vx *, .vx *::before, .vx *::after { box-sizing: border-box; }
 .vx button { font: inherit; color: inherit; }
@@ -677,7 +1060,12 @@ const CSS = `
 .vx-card-name { font-family: var(--serif); font-size: 18px; line-height: 1.2; color: var(--paper); }
 .vx-card-title { font-size: 13px; color: var(--muted); line-height: 1.4; }
 .vx-card-meta { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
-@media (max-width: 560px) { .vx-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .vx-card-name { font-size: 15px; } .vx-card-title { display: none; } .vx-gallery { padding: 26px 14px 10px; } }
+@media (max-width: 560px) {
+  .vx-gallery { padding: 26px 14px 10px; } .vx-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .vx-card .vx-plate { aspect-ratio: 3 / 4; } .vx-card .vx-plate-mono { font-size: 38px; }
+  .vx-card-body { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 26px 10px 10px; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--ink) 88%, transparent) 45%); }
+  .vx-card-name { font-size: 16px; } .vx-card-title { display: none; } .vx-card-meta { margin-top: 2px; }
+}
 
 /* Auth / join */
 .vx-center main, .vx-center .vx-panel { margin: 0 auto; }
@@ -727,20 +1115,152 @@ const CSS = `
 .vx-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--signal); animation: vx-dot 1.2s infinite; }
 .vx-dots span:nth-child(2) { animation-delay: .2s; } .vx-dots span:nth-child(3) { animation-delay: .4s; }
 @keyframes vx-dot { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-4px); } }
-.vx-composer { position: sticky; bottom: 0; display: flex; gap: 10px; align-items: flex-end; padding: 14px 0; background: linear-gradient(180deg, transparent, var(--ink) 30%); }
+.vx-dock { position: sticky; bottom: 0; z-index: 12; padding-bottom: env(safe-area-inset-bottom, 0); background: linear-gradient(180deg, transparent, var(--ink) 22px); }
+.vx-composer { display: flex; gap: 10px; align-items: flex-end; padding: 10px 0 14px; }
 .vx-composer textarea { resize: none; line-height: 1.5; min-height: 48px; }
 .vx-mic { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line); background: var(--deep); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .vx-mic.is-on { background: #8B2A1E; color: #fff; border-color: transparent; }
 .vx-send { min-height: 48px; }
 @media (max-width: 860px) {
   .vx-chat-wrap { grid-template-columns: 1fr; }
-  .vx-dossier { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 76px 1fr; gap: 14px; padding: 16px; }
-  .vx-dossier .vx-plate { aspect-ratio: 1; margin: 0; border-radius: 50%; }
-  .vx-dossier-name { font-size: 20px; } .vx-dossier-years { margin-bottom: 0; }
+  .vx-dossier { position: sticky; top: 47px; z-index: 11; max-height: none; border-right: none; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 12px; padding: 10px 16px; background: color-mix(in srgb, var(--ink) 90%, transparent); backdrop-filter: blur(10px); }
+  .vx-dossier .vx-plate { aspect-ratio: 1; margin: 0; border-radius: 50%; } .vx-dossier .vx-plate-mono { font-size: 18px; }
+  .vx-dossier-name { font-size: 18px; margin: 0; } .vx-dossier-title { display: none; } .vx-dossier-years { margin-bottom: 0; }
+  .vx-voiceprint { height: 28px; margin-top: 10px; }
+  .vx-composer textarea { font-size: 16px; min-height: 44px; } .vx-mic, .vx-send { min-height: 44px; } .vx-mic { width: 44px; height: 44px; }
+  .vx-a.is-page { padding: 12px 14px 14px; } .vx-a.is-page .vx-a-text { font-size: 17px; }
+  .vx-mode-note { font-size: 12px; } .vx-mode .vx-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .vx-mode .vx-chips button { white-space: nowrap; }
   .vx-dossier-h, .vx-sources, .vx-credit { display: none; }
   .vx-convo { padding: 0 16px; min-height: auto; }
   .vx-a-text { font-size: 17px; } .vx-q { max-width: 88%; }
 }
+/* Citations as source tabs */
+.vx-cites { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.vx-cites-h { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+.vx-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.vx-tab { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; padding: 4px 10px 5px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px 6px 2px 2px; background: color-mix(in srgb, var(--paper) 6%, transparent); cursor: pointer; font-size: 13px; color: var(--muted); }
+.vx-tab-t { font-family: var(--serif); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 26ch; }
+.vx-tab-y { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.vx-tab:hover, .vx-tab[aria-expanded="true"] { border-color: var(--accent); color: var(--paper); }
+.vx-tab[aria-expanded="true"] { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.vx-slip { margin-top: 8px; padding: 10px 14px; border-radius: 4px; border: 1px solid var(--line); border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--paper) 7%, var(--deep)); }
+.vx-slip-t { margin: 0; font-family: var(--serif); font-size: 16px; color: var(--paper); }
+.vx-slip-y { margin: 2px 0 0; font-size: 13px; color: var(--accent); }
+.vx-slip-n { margin: 6px 0 0; font-size: 12px; color: var(--faint); }
+.vx-today-tag { margin: 0 0 6px; font-size: 12px; color: var(--signal); }
+.vx-mode { padding-top: 10px; }
+.vx-seg-sm { display: inline-flex; margin-bottom: 8px; }
+.vx-seg-sm button { flex: none; padding: 6px 12px; font-size: 13px; }
+.vx-seg-sm button[aria-checked="true"] { background: var(--raise); color: var(--paper); }
+.vx-mode-note { margin: 0 0 8px; max-width: 70ch; }
+
+/* Answers as pages, with the speaker's portrait */
+.vx-a.is-page { --page: color-mix(in srgb, var(--paper) 5%, var(--deep)); position: relative; max-width: 72ch; padding: 14px 20px 16px; border: 1px solid var(--line); border-left: 3px solid var(--tint, var(--accent)); border-radius: 3px 10px 10px 3px; background: var(--page); box-shadow: 0 10px 30px -18px rgba(0,0,0,.7); }
+.vx-a.is-page::after { content: ""; position: absolute; top: -1px; right: -1px; width: 18px; height: 18px; border-radius: 0 10px 0 0; background: linear-gradient(225deg, var(--ink) 50%, color-mix(in srgb, var(--paper) 14%, var(--deep)) 50%); }
+.vx-a.is-page .vx-a-text { font-size: 19px; }
+.vx-a-face { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px var(--line); transition: box-shadow .3s; }
+.vx-a-face .vx-plate { border-radius: 50%; } .vx-a-face .vx-plate-mono { font-size: 11px; }
+.vx-a.is-saying { border-color: color-mix(in srgb, var(--signal) 45%, var(--line)); }
+.vx-a.is-saying .vx-a-face { box-shadow: 0 0 0 2px var(--signal), 0 0 14px color-mix(in srgb, var(--signal) 60%, transparent); }
+.vx-dossier .vx-plate { transition: box-shadow .4s; }
+.vx-dossier.is-live .vx-plate { box-shadow: 0 0 0 2px var(--signal), 0 0 34px color-mix(in srgb, var(--signal) 40%, transparent); animation: vx-glow 1.8s ease-in-out infinite alternate; }
+@keyframes vx-glow { from { filter: brightness(.95); } to { filter: brightness(1.12); } }
+@media (prefers-reduced-motion: reduce) { .vx-dossier.is-live .vx-plate, .vx-seat.is-turn .vx-seat-face { animation: none; } }
+
+/* Era styling: each collection's own ground and page */
+.vx.vx-era-republic { background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .86 0 0 0 0 .72 0 0 0 0 .46 0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+  radial-gradient(120% 80% at 85% -10%, var(--raise) 0%, var(--ink) 60%); background-attachment: fixed; }
+.vx-era-republic .vx-a.is-page { --page: color-mix(in srgb, #E8D9B5 8%, var(--deep));
+  background-image: repeating-linear-gradient(180deg, transparent 0 30px, color-mix(in srgb, var(--accent) 9%, transparent) 30px 31px); }
+.vx-era-republic .vx-section-title::after { content: ""; display: block; width: 64px; margin-top: 8px; border-top: 3px double var(--accent); }
+
+.vx.vx-era-philosophers { background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='turbulence' baseFrequency='.004 .018' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 -2.2 .62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)' opacity='.06'/%3E%3C/svg%3E"),
+  radial-gradient(120% 80% at 85% -10%, var(--raise) 0%, var(--ink) 60%); background-attachment: fixed; }
+.vx-era-philosophers .vx-a.is-page { --page: color-mix(in srgb, #D9D6CF 6%, var(--deep)); border-radius: 2px; }
+.vx-era-philosophers .vx-section-title, .vx-era-philosophers .vx-dossier-name { font-variant: small-caps; letter-spacing: .03em; }
+
+.vx.vx-era-inventors { background:
+  linear-gradient(color-mix(in srgb, var(--signal) 7%, transparent) 1px, transparent 1px) 0 0 / 140px 140px,
+  linear-gradient(90deg, color-mix(in srgb, var(--signal) 7%, transparent) 1px, transparent 1px) 0 0 / 140px 140px,
+  linear-gradient(color-mix(in srgb, var(--signal) 3%, transparent) 1px, transparent 1px) 0 0 / 28px 28px,
+  linear-gradient(90deg, color-mix(in srgb, var(--signal) 3%, transparent) 1px, transparent 1px) 0 0 / 28px 28px,
+  radial-gradient(120% 80% at 85% -10%, var(--raise) 0%, var(--ink) 60%); background-attachment: fixed; }
+.vx-era-inventors .vx-a.is-page { background-image:
+  linear-gradient(color-mix(in srgb, var(--signal) 6%, transparent) 1px, transparent 1px),
+  linear-gradient(90deg, color-mix(in srgb, var(--signal) 6%, transparent) 1px, transparent 1px); background-size: 22px 22px; }
+.vx-era-inventors .vx-card-meta, .vx-era-inventors .vx-tab-y, .vx-era-inventors .vx-dossier-years { font-family: ui-monospace, Menlo, monospace; }
+
+.vx.vx-era-explorers { background:
+  repeating-radial-gradient(circle at 18% 30%, transparent 0 38px, color-mix(in srgb, var(--accent) 7%, transparent) 38px 39px),
+  repeating-radial-gradient(circle at 82% 78%, transparent 0 46px, color-mix(in srgb, var(--accent) 6%, transparent) 46px 47px),
+  linear-gradient(color-mix(in srgb, var(--paper) 3%, transparent) 1px, transparent 1px) 0 0 / 120px 120px,
+  linear-gradient(90deg, color-mix(in srgb, var(--paper) 3%, transparent) 1px, transparent 1px) 0 0 / 120px 120px,
+  radial-gradient(120% 80% at 85% -10%, var(--raise) 0%, var(--ink) 60%); background-attachment: fixed; }
+.vx-era-explorers .vx-a.is-page { --page: color-mix(in srgb, #D8C9A3 7%, var(--deep)); }
+.vx-era-explorers .vx-section-title::before { content: "\\2726"; color: var(--signal); margin-right: 8px; font-size: 16px; vertical-align: 2px; }
+
+/* Roundtable */
+.vx-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 18px; }
+.vx-suggest { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 6px; }
+.vx-suggest-card { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--deep) 70%, transparent); cursor: pointer; }
+.vx-suggest-card:hover { border-color: var(--accent); }
+.vx-suggest-title { font-family: var(--serif); font-size: 17px; color: var(--paper); }
+.vx-suggest-who { font-size: 13px; color: var(--muted); }
+.vx-card { position: relative; }
+.vx-card:disabled { opacity: .45; cursor: not-allowed; }
+.vx-card.is-picked { border-color: var(--signal); box-shadow: 0 0 0 1px var(--signal) inset; }
+.vx-pick-badge { position: absolute; top: 8px; right: 8px; z-index: 3; width: 26px; height: 26px; border-radius: 50%; background: var(--signal); color: var(--ink); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+.vx-pickbar { position: sticky; bottom: 0; z-index: 15; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 24px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--ink) 92%, transparent); backdrop-filter: blur(10px); }
+.vx-pickbar span { color: var(--muted); font-size: 14px; }
+.vx-rt-wrap { flex: 1; max-width: 900px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; }
+.vx-rt-head { padding: 22px 28px 0; }
+.vx-table { position: relative; height: 236px; margin: 4px auto 0; max-width: 720px; }
+.vx-table-top { position: absolute; left: 50%; top: 58%; width: 52%; height: 112px; transform: translate(-50%, -50%); border-radius: 50%;
+  background: radial-gradient(60% 70% at 50% 40%, color-mix(in srgb, var(--accent) 34%, var(--raise)) 0%, color-mix(in srgb, var(--accent) 16%, var(--deep)) 70%, var(--deep) 100%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent), 0 0 0 7px color-mix(in srgb, var(--accent) 10%, transparent), 0 22px 40px -18px rgba(0,0,0,.8); }
+.vx-table-top span { position: absolute; inset: 16px 22%; border-radius: 50%; border: 1px dashed color-mix(in srgb, var(--paper) 14%, transparent); }
+.vx-table.n2 .vx-table-top { top: 50%; width: 44%; }
+.vx-seat { position: absolute; width: 132px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; transition: transform .3s; }
+.vx-table.n2 .s0 { left: 4%; top: 50%; transform: translateY(-50%); }
+.vx-table.n2 .s1 { right: 4%; top: 50%; transform: translateY(-50%); }
+.vx-table.n3 .s0 { left: 2%; top: 46%; }
+.vx-table.n3 .s1 { left: 50%; top: 0; transform: translateX(-50%); }
+.vx-table.n3 .s2 { right: 2%; top: 46%; }
+.vx-seat-face { width: 76px; height: 76px; border-radius: 50%; overflow: hidden; margin-bottom: 6px; box-shadow: 0 0 0 2px var(--line), 0 8px 20px -8px rgba(0,0,0,.8); transition: box-shadow .3s, transform .3s; }
+.vx-seat-face .vx-plate { border-radius: 50%; } .vx-seat-face .vx-plate-mono { font-size: 22px; }
+.vx-seat.is-turn .vx-seat-face { box-shadow: 0 0 0 2px var(--signal); animation: vx-think 1.2s ease-in-out infinite alternate; }
+.vx-seat.is-voice .vx-seat-face { transform: scale(1.08); box-shadow: 0 0 0 3px var(--signal), 0 0 30px color-mix(in srgb, var(--signal) 55%, transparent); }
+.vx-seat.is-turn .vx-rt-years, .vx-seat.is-voice .vx-rt-years { color: var(--signal); }
+@keyframes vx-think { from { box-shadow: 0 0 0 2px color-mix(in srgb, var(--signal) 40%, transparent); } to { box-shadow: 0 0 0 4px var(--signal); } }
+.vx-rt-name { font-family: var(--serif); font-size: 15px; line-height: 1.2; }
+.vx-rt-years { font-size: 12px; color: var(--faint); }
+.vx-rt-host { margin: 0; font-size: 14px; color: var(--muted); font-style: italic; max-width: 70ch; }
+.vx-rt-host.is-system { color: #F6CABF; font-style: normal; }
+@media (max-width: 700px) {
+  .vx-rt-head { padding: 14px 16px 0; } .vx-pickbar { padding: 10px 16px; }
+  .vx-table { height: 176px; } .vx-table-top { height: 74px; width: 46%; } .vx-table.n2 .vx-table-top { width: 40%; }
+  .vx-seat { width: 96px; } .vx-seat-face { width: 54px; height: 54px; margin-bottom: 4px; } .vx-seat-face .vx-plate-mono { font-size: 16px; }
+  .vx-rt-name { font-size: 13px; } .vx-rt-years { font-size: 11px; }
+  .vx-table.n3 .s0, .vx-table.n3 .s2 { top: 50%; }
+}
+
+/* Class & co-op leader page */
+.vx-code { font-family: ui-monospace, Menlo, monospace; letter-spacing: .06em; color: var(--signal); }
+.vx-faint { color: var(--faint); font-size: 12px; }
+.vx-class { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 22px; align-items: start; }
+.vx-roster { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.vx-roster li + li { border-top: 1px solid var(--line); }
+.vx-roster button { width: 100%; display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 10px 14px; background: transparent; border: none; cursor: pointer; overflow-wrap: anywhere; }
+.vx-roster button[aria-pressed="true"] { background: var(--raise); }
+.vx-log-item { border-top: 1px solid var(--line); padding: 14px 0; }
+.vx-log-meta { margin: 0 0 6px; font-size: 12px; color: var(--faint); text-transform: capitalize; }
+.vx-log-q { margin: 0 0 6px; font-weight: 600; white-space: pre-wrap; }
+.vx-log-a { margin: 0; font-family: var(--serif); font-size: 16px; line-height: 1.55; color: var(--muted); white-space: pre-wrap; }
+@media (max-width: 760px) { .vx-class { grid-template-columns: 1fr; } }
+
 @media (prefers-reduced-motion: reduce) {
   .vx-mosaic-cell { animation: none; opacity: 1; }
   .vx-voiceprint.is-live span { animation: none; height: 14px; }

@@ -152,3 +152,11 @@ Every agent system prompt explicitly restricts responses to verified primary sou
 ---
 
 *Voices Across History™ is a trademark of IntexiaU Corp. An IntexiaU Institute Platform.*
+
+## Going live with roundtables, class codes, citations and Explorers
+
+1. **Database:** apply `supabase/migrations/20261111193000_vah_class_codes.sql` once to the shared IntexiaU Institute project. It only adds tables (`vah_groups`, `vah_group_members`, `vah_group_turns`), the `vah_join_group` function, and widens `vah_feedback.app` to allow `explorers`. Try it on a Supabase branch first.
+2. **Explorers app:** create a Vercel project `voices-of-the-explorers` from this repo with root directory `explorers/`, and give it the same environment variables as the other collections (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, optional `ANTHROPIC_MODEL`, and the Stripe variables).
+3. **Hub:** the hub's `vercel.json` already rewrites `/explorers` to `voices-of-the-explorers.vercel.app`, so it works once step 2 exists.
+4. **Shared code:** after editing anything in `shared/`, run `bash scripts/sync-shared.sh`, which now also copies `roundtable.js` and `group.js` into all four collections.
+5. **Class codes** are created in the admin app (Class Codes). They don't charge anyone; pricing for groups is still to be decided in Stripe.

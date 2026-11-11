@@ -13,8 +13,13 @@ export const COLLECTION = {
   legacyHosts: ["voices-of-the-inventors.vercel.app"],
   filterBy: "era",
   sectionLabel: "The Inventors",
-  otherCollections: [{ label: "Voices of the Republic", href: "/republic/" }, { label: "Voices of the Philosophers", href: "/philosophers/" }],
-  greeting: (f) => `I am ${f.name}. ${f.title}. Bring me your questions — about how I worked, what I tried, what failed and what I learned — and I will answer from my own notebooks and writings.`,
+  otherCollections: [{ label: "Voices of the Republic", href: "/republic/" }, { label: "Voices of the Philosophers", href: "/philosophers/" }, { label: "Voices of the Explorers", href: "/explorers/" }],
+  roundtables: [
+    { title: "The current wars", ids: ["edison", "tesla"], question: "Which is the better way to light the world, direct or alternating current?" },
+    { title: "Can machines think?", ids: ["lovelace", "turing"], question: "Could a machine ever originate an idea of its own?" },
+    { title: "Proof and authority", ids: ["galileo", "newton", "davinci"], question: "How should we decide what is true about nature?" },
+  ],
+  greeting: (f) => `Hello, I'm ${f.name}. Ask me how I worked, what I tried, what failed and what I learned along the way, and I'll tell you from my own notebooks and writings.`,
   theme: {
     ink: "#111316", deep: "#171A1E", raise: "#21262C", paper: "#ECE6DC",
     muted: "rgba(236,230,220,0.74)", faint: "rgba(236,230,220,0.5)", line: "rgba(236,230,220,0.13)",
