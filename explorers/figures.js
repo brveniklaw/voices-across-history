@@ -43,7 +43,7 @@ export const FIGURES = [
     "icon": "🕌",
     "color": "#7A5A2A",
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Handmade_oil_painting_reproduction_of_Ibn_Battuta_in_Egypt,_a_painting_by_Hippolyte_Leon_Benett..jpg?width=500",
-    "portraitCredit": "Imagined scene after Hippolyte Léon Benett, 1878 — no portrait from his lifetime survives",
+    "portraitCredit": "Léon Benett, imagined scene for Jules Verne’s Découverte de la Terre, 1878 — no portrait from his lifetime survives",
     "monogram": "IB",
     "voiceProfile": { "pitch": 0.92, "rate": 0.88, "voiceHint": ["male", "english"], "lang": "en-GB" },
     "primarySources": [
