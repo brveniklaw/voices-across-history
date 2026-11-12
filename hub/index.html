@@ -595,6 +595,73 @@
     }
     .pricing-promo a:hover { border-color: var(--gold); }
 
+    /* ── INSTITUTE PARTNERSHIP ────────────────── */
+    .partner-section {
+      padding: 5rem 2rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(184,137,42,0.15);
+    }
+    .partner-lede {
+      font-family: 'EB Garamond', serif;
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      color: rgba(245,237,214,0.75);
+      max-width: 680px;
+      margin: 0 auto 2.8rem;
+      line-height: 1.65;
+    }
+    .partner-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.2rem;
+      max-width: 1100px;
+      margin: 0 auto 2.8rem;
+      text-align: left;
+    }
+    .partner-card {
+      border: 1px solid rgba(184,137,42,0.25);
+      background: rgba(26,18,8,0.55);
+      padding: 1.8rem 1.5rem;
+    }
+    .partner-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+      margin-bottom: 0.8rem;
+    }
+    .partner-desc {
+      font-family: 'EB Garamond', serif;
+      font-size: 1.02rem;
+      line-height: 1.55;
+      color: rgba(245,237,214,0.7);
+    }
+    .partner-includes {
+      max-width: 760px;
+      margin: 0 auto 2.6rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem 2rem;
+      text-align: left;
+    }
+    .partner-include {
+      font-family: 'EB Garamond', serif;
+      font-size: 1.02rem;
+      line-height: 1.5;
+      color: rgba(245,237,214,0.72);
+      padding-left: 1.2rem;
+      position: relative;
+    }
+    .partner-include::before {
+      content: '✦';
+      color: var(--gold);
+      font-size: 0.6rem;
+      position: absolute;
+      left: 0;
+      top: 0.45rem;
+    }
+    .partner-include strong { color: var(--parchment); font-weight: 600; }
+
     @media (max-width: 480px) {
       .pricing-features { gap: 0.8rem 1.2rem; }
     }
@@ -679,9 +746,44 @@
   </div>
 </section>
 
+<!-- ── INSTITUTE PARTNERSHIP ───────────────────────── -->
+<section class="partner-section" id="partner">
+  <span class="pricing-eyebrow">IntexiaU Institute Partnership</span>
+  <h2 class="pricing-headline">Bring Voices Across History<br>to Your Learners</h2>
+  <div class="pricing-rule"></div>
+
+  <p class="partner-lede">
+    Schools, co-ops and colleges join the IntexiaU Institute as members. Membership opens every collection to all of your students and teachers, priced by the number of students you serve, and adds Institute training courses for your staff and your wider community.
+  </p>
+
+  <div class="partner-grid">
+    <div class="partner-card">
+      <div class="partner-name">Homeschool Co-ops</div>
+      <p class="partner-desc">One membership for your whole co-op. Families join with your class code, and teachers lead roundtables where students question several voices at once.</p>
+    </div>
+    <div class="partner-card">
+      <div class="partner-name">Public &amp; Private Schools</div>
+      <p class="partner-desc">Every student and teacher in your school or district, with primary sources cited in every answer and an admin dashboard to see how classes use it.</p>
+    </div>
+    <div class="partner-card">
+      <div class="partner-name">Colleges &amp; Universities</div>
+      <p class="partner-desc">A partnership for history, civics, humanities and teacher education programs, with Institute courses your college can offer to students and the community.</p>
+    </div>
+  </div>
+
+  <div class="partner-includes">
+    <div class="partner-include"><strong>Every collection</strong> for all of your students and teachers</div>
+    <div class="partner-include"><strong>Class codes and roundtables</strong> for teacher-led sessions</div>
+    <div class="partner-include"><strong>Pricing by enrollment</strong>, set by the number of students you serve</div>
+    <div class="partner-include"><strong>Institute training courses</strong>, including AI training, for staff and your community</div>
+  </div>
+
+  <a href="#partner" class="pricing-cta">Ask About Becoming a Partner</a>
+</section>
+
 <!-- ── PRICING ─────────────────────────────────────── -->
 <section class="pricing-section">
-  <span class="pricing-eyebrow">Simple, Honest Pricing</span>
+  <span class="pricing-eyebrow">For Families &amp; Individual Learners</span>
   <h2 class="pricing-headline">One Subscription.<br>The Whole Platform.</h2>
   <div class="pricing-rule"></div>
 
@@ -689,7 +791,7 @@
   <div class="pricing-period">per month</div>
 
   <p class="pricing-desc">
-    Unlimited conversations with every founder, philosopher, and inventor in the library — one membership opens every collection, including new voices as they arrive.
+    Unlimited conversations with every founder, philosopher, inventor, explorer and great woman in the library — one membership opens every collection, including new voices as they arrive.
   </p>
 
   <div class="pricing-features">
