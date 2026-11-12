@@ -460,7 +460,7 @@ export default function VoicesApp({ collection: C, figures }) {
               <button className="vx-btn" onClick={enter} disabled={checking}>
                 {checking ? "One moment…" : access?.active ? C.enterLabel : session ? "Continue" : "Start your free 7-day trial"}
               </button>
-              <p className="vx-price"><strong>$9.99 a month</strong> for every collection: Republic, Philosophers and Inventors.</p>
+              <p className="vx-price"><strong>$9.99 a month</strong> for every collection: Republic, Philosophers, Inventors, Explorers and Great Women.</p>
             </div>
             {trialDays !== null && <p className="vx-status">Free trial: {trialDays} day{trialDays === 1 ? "" : "s"} left</p>}
             {access?.staff && <p className="vx-status">IntexiaU staff access</p>}
