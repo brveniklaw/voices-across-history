@@ -460,7 +460,7 @@ export default function VoicesApp({ collection: C, figures }) {
               <button className="vx-btn" onClick={enter} disabled={checking}>
                 {checking ? "One moment…" : access?.active ? C.enterLabel : session ? "Continue" : "Start your free 7-day trial"}
               </button>
-              <p className="vx-price"><strong>$9.99 a month</strong> for every collection: Republic, Philosophers, Inventors, Explorers and Great Women.</p>
+              <p className="vx-price"><strong>$5.99 a month</strong> for every collection: Republic, Philosophers, Inventors, Explorers and Great Women.</p>
             </div>
             {trialDays !== null && <p className="vx-status">Free trial: {trialDays} day{trialDays === 1 ? "" : "s"} left</p>}
             {access?.staff && <p className="vx-status">IntexiaU staff access</p>}
@@ -534,16 +534,16 @@ export default function VoicesApp({ collection: C, figures }) {
           <h2 className="vx-h2">{ended ? "Your access has ended" : "Start your free 7-day trial"}</h2>
           <p className="vx-muted">
             {ended
-              ? "Continue your conversations for $9.99 a month. One membership opens every collection, and you can cancel anytime."
-              : "Add a card to begin. You pay nothing today, then $9.99 a month for the whole platform. Cancel anytime."}
+              ? "Continue your conversations for $5.99 a month. One membership opens every collection, and you can cancel anytime."
+              : "Add a card to begin. You pay nothing today, then $5.99 a month for the whole platform. Cancel anytime."}
           </p>
           <div className="vx-pricecard">
-            <span className="vx-pricecard-amt">$9.99</span>
+            <span className="vx-pricecard-amt">$5.99</span>
             <span className="vx-pricecard-per">per month, every collection</span>
           </div>
           {joinErr && <div className="vx-note vx-note-err">{joinErr}</div>}
           <button className="vx-btn vx-btn-wide" onClick={startMembership} disabled={joinBusy}>
-            {joinBusy ? "Opening secure checkout…" : ended ? "Subscribe for $9.99 a month" : "Start free trial"}
+            {joinBusy ? "Opening secure checkout…" : ended ? "Subscribe for $5.99 a month" : "Start free trial"}
           </button>
           {!showPromo ? (
             <button className="vx-link vx-center-text" onClick={() => setShowPromo(true)}>Have a promo or class code?</button>

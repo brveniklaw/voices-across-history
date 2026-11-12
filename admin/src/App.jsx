@@ -190,7 +190,7 @@ function SubscribersView() {
   });
 
   const activeCount = users.filter(u => u.access_type === "subscribed").length;
-  const mrr = (activeCount * 9.99).toFixed(2);
+  const mrr = (activeCount * 5.99).toFixed(2);
 
   return (
     <div>

@@ -1,4 +1,4 @@
-// POST /api/create-checkout — starts the $9.99/month membership (7-day free trial for new members).
+// POST /api/create-checkout — starts the $5.99/month membership (7-day free trial for new members).
 // One membership covers every collection; if the visitor already has access, no checkout is created.
 import Stripe from 'stripe';
 import { getUser, accessFor, returnUrl, readJson } from './_lib.js';

@@ -595,6 +595,64 @@
     }
     .pricing-promo a:hover { border-color: var(--gold); }
 
+    /* ── LICENSE TIERS ────────────────────────── */
+    .tiers-eyebrow { margin-top: 4.5rem; }
+    .tiers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      text-align: left;
+    }
+    .tier-card {
+      border: 1px solid rgba(184,137,42,0.25);
+      background: rgba(26,18,8,0.55);
+      padding: 1.8rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+    .tier-card.tier-family { border-color: rgba(212,168,75,0.6); box-shadow: 0 0 40px rgba(184,137,42,0.12); }
+    .tier-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+    }
+    .tier-price {
+      font-family: 'Cinzel', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--parchment);
+    }
+    .tier-price small {
+      font-size: 0.55em;
+      letter-spacing: 0.1em;
+      color: var(--aged-lt);
+      font-weight: 400;
+    }
+    .tier-desc {
+      font-family: 'EB Garamond', serif;
+      font-size: 1.02rem;
+      line-height: 1.55;
+      color: rgba(245,237,214,0.7);
+      flex: 1;
+    }
+    .tier-link {
+      font-family: 'Cinzel', serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(184,137,42,0.3);
+      align-self: flex-start;
+      padding-bottom: 2px;
+    }
+    .tier-link:hover { border-color: var(--gold); }
+
     @media (max-width: 480px) {
       .pricing-features { gap: 0.8rem 1.2rem; }
     }
@@ -685,11 +743,11 @@
   <h2 class="pricing-headline">One Subscription.<br>The Whole Platform.</h2>
   <div class="pricing-rule"></div>
 
-  <div class="pricing-amount"><sup>$</sup>9.99</div>
+  <div class="pricing-amount"><sup>$</sup>5.99</div>
   <div class="pricing-period">per month</div>
 
   <p class="pricing-desc">
-    Unlimited conversations with every founder, philosopher, and inventor in the library — one membership opens every collection, including new voices as they arrive.
+    Unlimited conversations with every founder, philosopher, inventor, explorer and great woman in the library — one membership opens every collection, including new voices as they arrive.
   </p>
 
   <div class="pricing-features">
@@ -701,6 +759,37 @@
   <a href="/republic/" class="pricing-cta">Start Free — 7 Days on Us</a>
 
   <p class="pricing-promo">One IntexiaU account signs you in to every collection. Have a promo code? <a href="/republic/">Redeem it after you sign in.</a></p>
+
+  <span class="pricing-eyebrow tiers-eyebrow" id="licenses">For Families, Classrooms, Schools &amp; Libraries</span>
+  <h2 class="pricing-headline">A Plan for Every Kind of Learner</h2>
+  <div class="pricing-rule"></div>
+
+  <div class="tiers-grid">
+    <div class="tier-card tier-family">
+      <div class="tier-name">Family</div>
+      <div class="tier-price">$5.99 <small>/ month</small></div>
+      <p class="tier-desc">Every collection for your household, with a free 7-day trial. Made for homeschool families and curious readers.</p>
+      <a href="/republic/" class="tier-link">Start free trial →</a>
+    </div>
+    <div class="tier-card">
+      <div class="tier-name">Co-op &amp; Classroom</div>
+      <div class="tier-price">$149 <small>/ year</small></div>
+      <p class="tier-desc">One license per teacher or co-op group, up to 30 students. Students join with your class code, and you run roundtables together.</p>
+      <a href="#licenses" class="tier-link">Ask about a license →</a>
+    </div>
+    <div class="tier-card">
+      <div class="tier-name">School &amp; District</div>
+      <div class="tier-price">$1,500 <small>/ year per school</small></div>
+      <p class="tier-desc">Every student and teacher in the building, with the admin dashboard to see who is using it. District pricing for three or more schools.</p>
+      <a href="#licenses" class="tier-link">Ask about a license →</a>
+    </div>
+    <div class="tier-card">
+      <div class="tier-name">Libraries</div>
+      <div class="tier-price">$600 <small>/ year</small></div>
+      <p class="tier-desc">A flat yearly license so every cardholder can talk with every voice in the library, at home or at the branch.</p>
+      <a href="#licenses" class="tier-link">Ask about a license →</a>
+    </div>
+  </div>
 </section>
 
 <!-- ── FOUNDING DOCUMENTS ─────────────────────────── -->
