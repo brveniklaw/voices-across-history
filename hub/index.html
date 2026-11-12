@@ -661,6 +661,48 @@
       top: 0.45rem;
     }
     .partner-include strong { color: var(--parchment); font-weight: 600; }
+    .partner-table-wrap { max-width: 760px; margin: 0 auto 2.6rem; overflow-x: auto; }
+    .partner-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'EB Garamond', serif;
+      font-size: 1.02rem;
+      color: rgba(245,237,214,0.8);
+      text-align: left;
+    }
+    .partner-table th {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+      font-weight: 600;
+      padding: 0.9rem 0.8rem;
+      border-bottom: 1px solid rgba(184,137,42,0.4);
+      vertical-align: bottom;
+    }
+    .partner-table th small {
+      display: block;
+      font-family: 'EB Garamond', serif;
+      font-size: 0.95rem;
+      letter-spacing: 0;
+      text-transform: none;
+      color: rgba(245,237,214,0.55);
+      font-weight: 400;
+      margin-top: 0.3rem;
+    }
+    .partner-table td {
+      padding: 0.85rem 0.8rem;
+      border-bottom: 1px solid rgba(184,137,42,0.15);
+    }
+    .partner-table td:first-child { color: var(--parchment); }
+    .partner-note {
+      font-family: 'EB Garamond', serif;
+      font-size: 0.95rem;
+      color: rgba(245,237,214,0.5);
+      margin-top: 0.8rem;
+      text-align: center;
+    }
 
     @media (max-width: 480px) {
       .pricing-features { gap: 0.8rem 1.2rem; }
@@ -753,7 +795,7 @@
   <div class="pricing-rule"></div>
 
   <p class="partner-lede">
-    Schools, co-ops and colleges join the IntexiaU Institute as members. Membership opens every collection to all of your students and teachers, priced by the number of students you serve. Every Institute training course, including AI training, is included for your students and staff. Individuals outside a partner can take the courses for a fee.
+    Schools, co-ops and colleges join the IntexiaU Institute as members. Membership opens every collection to all of your students and teachers, priced by the number of students you serve. Enterprise partners also get every Institute training course, including AI training, for their students and staff, plus new programs as they come online. Individuals can take the courses for a fee.
   </p>
 
   <div class="partner-grid">
@@ -767,7 +809,7 @@
     </div>
     <div class="partner-card">
       <div class="partner-name">Colleges &amp; Universities</div>
-      <p class="partner-desc">A partnership for history, civics, humanities and teacher education programs, with every Institute course included for your students and faculty.</p>
+      <p class="partner-desc">A partnership for history, civics, humanities and teacher education programs, with Enterprise adding every Institute course for your students and faculty.</p>
     </div>
   </div>
 
@@ -775,7 +817,26 @@
     <div class="partner-include"><strong>Every collection</strong> for all of your students and teachers</div>
     <div class="partner-include"><strong>Class codes and roundtables</strong> for teacher-led sessions</div>
     <div class="partner-include"><strong>Pricing by enrollment</strong>, set by the number of students you serve</div>
-    <div class="partner-include"><strong>All Institute training included</strong> for your students and staff</div>
+    <div class="partner-include"><strong>Enterprise adds all Institute training</strong> and every new program as it launches</div>
+  </div>
+
+  <div class="partner-table-wrap">
+    <table class="partner-table">
+      <thead>
+        <tr>
+          <th>Students</th>
+          <th>Membership<small>Every collection, class codes and roundtables</small></th>
+          <th>Enterprise<small>Membership plus all Institute training and new programs</small></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Up to 50</td><td>$250 to $500 a year</td><td>$500 to $1,000 a year</td></tr>
+        <tr><td>51 to 250</td><td>$750 to $1,500 a year</td><td>$1,500 to $3,000 a year</td></tr>
+        <tr><td>251 to 1,000</td><td>$2,000 to $4,000 a year</td><td>$4,000 to $8,000 a year</td></tr>
+        <tr><td>Over 1,000, and colleges</td><td>Custom quote</td><td>Custom quote</td></tr>
+      </tbody>
+    </table>
+    <p class="partner-note">Each partner receives a quote within these ranges.</p>
   </div>
 
   <a href="mailto:partnerships@intexiau.com?subject=Institute%20partnership%20inquiry" class="pricing-cta">Ask About Becoming a Partner</a>
