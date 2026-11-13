@@ -236,8 +236,8 @@
       font-family: var(--display); font-weight: 700; font-size: clamp(1.7rem, 3.6vw, 2.6rem); line-height: 1.18;
       color: var(--parchment); margin-bottom: 1rem;
     }
-    .section-rule { width: 90px; height: 1px; margin: 0 auto; background: linear-gradient(90deg, transparent, var(--gold), transparent); position: relative; }
-    .section-rule::after { content: '✦'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -54%); font-size: 0.6rem; color: var(--gold); background: var(--bg, var(--ink)); padding: 0 6px; }
+    .section-rule { --rc: var(--gold); width: 110px; height: 1px; margin: 0 auto; background: linear-gradient(90deg, transparent, var(--rc) 38%, transparent 42%, transparent 58%, var(--rc) 62%, transparent); position: relative; }
+    .section-rule::after { content: '✦'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -54%); font-size: 0.6rem; color: var(--rc); }
     .section-sub { font-style: italic; color: var(--text-soft); font-size: 1.15rem; margin-top: 1.1rem; }
     @media (max-width: 640px) { .section { padding: 72px 0; } .section-header { margin-bottom: 40px; } }
 
@@ -475,8 +475,7 @@
     .docs-section .section-eyebrow { color: var(--crimson); }
     .docs-section .section-eyebrow::before, .docs-section .section-eyebrow::after { background: var(--crimson); }
     .docs-section .section-title { color: #1A1208; }
-    .docs-section .section-rule { background: linear-gradient(90deg, transparent, #8B1A1A, transparent); }
-    .docs-section .section-rule::after { color: var(--crimson); background: #EFE4C6; }
+    .docs-section .section-rule { --rc: #8B1A1A; }
     .docs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
     @media (max-width: 960px) { .docs-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 640px) { .docs-grid { grid-template-columns: 1fr; } }
