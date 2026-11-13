@@ -311,7 +311,7 @@
       color: var(--c-soft); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
       padding: 0.28rem 0.7rem; border-radius: 99px;
     }
-    .card-title { font-family: var(--display); font-weight: 700; font-size: 1.22rem; letter-spacing: 0.03em; color: var(--parchment); margin-bottom: 0.35rem; }
+    .card-title { font-family: var(--display); font-weight: 700; font-size: 1.14rem; letter-spacing: 0.03em; color: var(--parchment); margin-bottom: 0.35rem; }
     .card-sub { font-family: var(--display); font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-soft); margin-bottom: 1rem; }
     .card-desc { font-style: italic; font-size: 1.04rem; line-height: 1.6; color: var(--text-soft); margin-bottom: 1.5rem; flex: 1; }
     .card-tag {
@@ -535,12 +535,7 @@
     .footer-brand { font-family: var(--display); font-size: 1.05rem; font-weight: 700; letter-spacing: 0.12em; color: var(--gold); margin-bottom: 0.5rem; }
     .footer-copy { font-size: 0.92rem; color: rgba(245,237,214,0.45); }
 
-    /* ── Reveal on scroll (only when JS runs) ─── */
-    .js .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
-    .js .reveal.in { opacity: 1; transform: none; }
-    @media (prefers-reduced-motion: reduce) { .js .reveal { opacity: 1; transform: none; transition: none; } }
   </style>
-  <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
 
@@ -623,7 +618,7 @@
 <!-- ── COLLECTIONS ───────────────────────────────── -->
 <section class="section collections-section" id="collections">
   <div class="wrap">
-    <div class="section-header reveal">
+    <div class="section-header">
       <span class="section-eyebrow">The Collections</span>
       <h2 class="section-title">Five Collections, One Membership</h2>
       <div class="section-rule"></div>
@@ -632,7 +627,7 @@
     <div class="collections">
 
       <!-- Voices of the Republic -->
-      <a href="/republic/" class="collection-card c-republic reveal">
+      <a href="/republic/" class="collection-card c-republic">
         <div class="card-faces" aria-hidden="true">
           <span class="face">AA<img src="/portraits/abigail.jpg" alt="" loading="lazy" /></span>
           <span class="face">GW<img src="/portraits/washington.jpg" alt="" loading="lazy" /></span>
@@ -648,7 +643,7 @@
       </a>
 
       <!-- Voices of the Philosophers -->
-      <a href="/philosophers/" class="collection-card c-philosophers reveal">
+      <a href="/philosophers/" class="collection-card c-philosophers">
         <div class="card-faces" aria-hidden="true">
           <span class="face">MA<img src="/portraits/marcus.jpg" alt="" loading="lazy" /></span>
           <span class="face">S<img src="/portraits/socrates.jpg" alt="" loading="lazy" /></span>
@@ -664,7 +659,7 @@
       </a>
 
       <!-- Voices of the Inventors -->
-      <a href="/inventors/" class="collection-card c-inventors reveal">
+      <a href="/inventors/" class="collection-card c-inventors">
         <div class="card-faces" aria-hidden="true">
           <span class="face">LV<img src="https://commons.wikimedia.org/wiki/Special:FilePath/Leonardo_self.jpg?width=240" alt="" loading="lazy" /></span>
           <span class="face">NT<img src="https://commons.wikimedia.org/wiki/Special:FilePath/Tesla_circa_1890.jpeg?width=240" alt="" loading="lazy" /></span>
@@ -680,7 +675,7 @@
       </a>
 
       <!-- Voices of the Explorers -->
-      <a href="/explorers/" class="collection-card c-explorers reveal">
+      <a href="/explorers/" class="collection-card c-explorers">
         <div class="card-faces" aria-hidden="true">
           <span class="face">MH<img src="https://commons.wikimedia.org/wiki/Special:FilePath/Matthew_Henson_1910.jpg?width=240" alt="" loading="lazy" /></span>
           <span class="face">ES<img src="https://commons.wikimedia.org/wiki/Special:FilePath/Ernest_Henry_Shackleton_(1921_portrait).jpg?width=240" alt="" loading="lazy" /></span>
@@ -696,7 +691,7 @@
       </a>
 
       <!-- Voices of Great Women -->
-      <a href="/women/" class="collection-card c-women reveal">
+      <a href="/women/" class="collection-card c-women">
         <div class="card-faces" aria-hidden="true">
           <span class="face">ST<img src="https://commons.wikimedia.org/wiki/Special:FilePath/Sojourner_Truth_c1864.jpg?width=240" alt="" loading="lazy" /></span>
           <span class="face">E<img src="https://commons.wikimedia.org/wiki/Special:FilePath/Elizabeth_I_Darnley_Portrait.jpg?width=240" alt="" loading="lazy" /></span>
@@ -718,32 +713,32 @@
 <!-- ── INSTITUTE PARTNERSHIP ───────────────────────── -->
 <section class="section partner-section" id="partner">
   <div class="wrap">
-    <div class="section-header reveal">
+    <div class="section-header">
       <span class="section-eyebrow">IntexiaU Institute Partnership</span>
       <h2 class="section-title">Bring Voices Across History<br>to Your Learners</h2>
       <div class="section-rule"></div>
     </div>
 
-    <p class="partner-lede reveal">
+    <p class="partner-lede">
       Schools, co-ops and colleges join the IntexiaU Institute as members. Membership opens every collection to all of your students and teachers, priced by the number of students you serve. Enterprise partners also get every Institute training course, including AI training, for their students and staff, plus new programs as they come online. Individuals can take the courses for a fee.
     </p>
 
     <div class="partner-grid">
-      <div class="partner-card reveal">
+      <div class="partner-card">
         <div class="partner-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>
         </div>
         <div class="partner-name">Homeschool Co-ops</div>
         <p class="partner-desc">One membership for your whole co-op. Families join with your class code, and teachers lead roundtables where students question several voices at once.</p>
       </div>
-      <div class="partner-card reveal">
+      <div class="partner-card">
         <div class="partner-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/><path d="M12 4V1.5"/><path d="M12 1.5h4l-1 1.2 1 1.3h-4"/></svg>
         </div>
         <div class="partner-name">Public &amp; Private Schools</div>
         <p class="partner-desc">Every student and teacher in your school or district, with primary sources cited in every answer and an admin dashboard to see how classes use it.</p>
       </div>
-      <div class="partner-card reveal">
+      <div class="partner-card">
         <div class="partner-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/></svg>
         </div>
@@ -752,14 +747,14 @@
       </div>
     </div>
 
-    <div class="partner-includes reveal">
+    <div class="partner-includes">
       <div class="partner-include"><strong>Every collection</strong> for all of your students and teachers</div>
       <div class="partner-include"><strong>Class codes and roundtables</strong> for teacher-led sessions</div>
       <div class="partner-include"><strong>Pricing by enrollment</strong>, set by the number of students you serve</div>
       <div class="partner-include"><strong>Enterprise adds all Institute training</strong> and every new program as it launches</div>
     </div>
 
-    <div class="partner-table-wrap reveal">
+    <div class="partner-table-wrap">
       <table class="partner-table">
         <thead>
           <tr>
@@ -778,7 +773,7 @@
     </div>
     <p class="partner-note">Each partner receives a quote within these ranges.</p>
 
-    <div class="cta-row reveal">
+    <div class="cta-row">
       <a href="mailto:partnerships@intexiau.com?subject=Institute%20partnership%20inquiry" class="btn btn-gold">Ask About Becoming a Partner</a>
       <p class="cta-alt">Or write to <a href="mailto:partnerships@intexiau.com">partnerships@intexiau.com</a></p>
     </div>
@@ -788,7 +783,7 @@
 <!-- ── PRICING ─────────────────────────────────────── -->
 <section class="section pricing-section" id="families">
   <div class="wrap">
-    <div class="price-card reveal">
+    <div class="price-card">
       <div class="price-side">
         <div class="pricing-amount"><sup>$</sup>9.99</div>
         <div class="pricing-period">per month</div>
@@ -814,7 +809,7 @@
 <!-- ── FOUNDING DOCUMENTS ─────────────────────────── -->
 <section class="section docs-section" id="sources">
   <div class="wrap">
-    <div class="section-header reveal">
+    <div class="section-header">
       <span class="section-eyebrow">Primary Sources</span>
       <h2 class="section-title">The Documents That Founded a Nation</h2>
       <div class="section-rule"></div>
@@ -822,7 +817,7 @@
 
     <div class="docs-grid">
 
-      <div class="doc-card reveal">
+      <div class="doc-card">
         <div class="doc-year">1776</div>
         <div class="doc-title">The Declaration of Independence</div>
         <div class="doc-desc">Jefferson's assertion of natural rights and the colonies' formal separation from British rule — the founding statement of American purpose.</div>
@@ -833,7 +828,7 @@
         </div>
       </div>
 
-      <div class="doc-card reveal">
+      <div class="doc-card">
         <div class="doc-year">1787</div>
         <div class="doc-title">The Constitution of the United States</div>
         <div class="doc-desc">The supreme law of the land, establishing the framework of federal government and the separation of powers among three branches.</div>
@@ -844,7 +839,7 @@
         </div>
       </div>
 
-      <div class="doc-card reveal">
+      <div class="doc-card">
         <div class="doc-year">1791</div>
         <div class="doc-title">The Bill of Rights</div>
         <div class="doc-desc">The first ten amendments guaranteeing individual liberties — freedom of speech, religion, press, and the protections against government overreach.</div>
@@ -854,7 +849,7 @@
         </div>
       </div>
 
-      <div class="doc-card reveal">
+      <div class="doc-card">
         <div class="doc-year">1787–1788</div>
         <div class="doc-title">The Federalist Papers</div>
         <div class="doc-desc">85 essays by Hamilton, Madison, and Jay advocating for ratification of the Constitution — the definitive commentary on its meaning and intent.</div>
@@ -865,7 +860,7 @@
         </div>
       </div>
 
-      <div class="doc-card reveal">
+      <div class="doc-card">
         <div class="doc-year">1776</div>
         <div class="doc-title">Common Sense — Thomas Paine</div>
         <div class="doc-desc">The pamphlet that ignited popular support for independence, selling 500,000 copies in a nation of 2.5 million people.</div>
@@ -875,7 +870,7 @@
         </div>
       </div>
 
-      <div class="doc-card reveal">
+      <div class="doc-card">
         <div class="doc-year">1796</div>
         <div class="doc-title">Washington's Farewell Address</div>
         <div class="doc-desc">Washington's warning against partisan division, entangling foreign alliances, and the dangers of regional factionalism — as relevant today as in 1796.</div>
@@ -892,7 +887,7 @@
 <!-- ── LOCATIONS ──────────────────────────────────── -->
 <section class="section locations-section" id="visit">
   <div class="wrap">
-    <div class="section-header reveal">
+    <div class="section-header">
       <span class="section-eyebrow">Visit in Person</span>
       <h2 class="section-title">Where History Lives</h2>
       <div class="section-rule"></div>
@@ -901,7 +896,7 @@
 
     <div class="locations-grid">
 
-      <div class="loc-card reveal">
+      <div class="loc-card">
         <span class="loc-flag" aria-hidden="true">🏛️</span>
         <div class="loc-name">National Archives</div>
         <div class="loc-city">Washington, D.C.</div>
@@ -909,7 +904,7 @@
         <a href="https://www.archives.gov/visit" target="_blank" rel="noopener" class="loc-link">Plan Your Visit →</a>
       </div>
 
-      <div class="loc-card reveal">
+      <div class="loc-card">
         <span class="loc-flag" aria-hidden="true">📚</span>
         <div class="loc-name">Library of Congress</div>
         <div class="loc-city">Washington, D.C.</div>
@@ -917,7 +912,7 @@
         <a href="https://www.loc.gov/visit/" target="_blank" rel="noopener" class="loc-link">Plan Your Visit →</a>
       </div>
 
-      <div class="loc-card reveal">
+      <div class="loc-card">
         <span class="loc-flag" aria-hidden="true">🔔</span>
         <div class="loc-name">Independence Hall &amp; Liberty Bell</div>
         <div class="loc-city">Philadelphia, PA</div>
@@ -925,7 +920,7 @@
         <a href="https://www.nps.gov/inde/index.htm" target="_blank" rel="noopener" class="loc-link">Plan Your Visit →</a>
       </div>
 
-      <div class="loc-card reveal">
+      <div class="loc-card">
         <span class="loc-flag" aria-hidden="true">🌿</span>
         <div class="loc-name">Monticello</div>
         <div class="loc-city">Charlottesville, VA</div>
@@ -933,7 +928,7 @@
         <a href="https://www.monticello.org/visit/" target="_blank" rel="noopener" class="loc-link">Plan Your Visit →</a>
       </div>
 
-      <div class="loc-card reveal">
+      <div class="loc-card">
         <span class="loc-flag" aria-hidden="true">🏡</span>
         <div class="loc-name">Mount Vernon</div>
         <div class="loc-city">Mount Vernon, VA</div>
@@ -941,7 +936,7 @@
         <a href="https://www.mountvernon.org/plan-your-visit/" target="_blank" rel="noopener" class="loc-link">Plan Your Visit →</a>
       </div>
 
-      <div class="loc-card reveal">
+      <div class="loc-card">
         <span class="loc-flag" aria-hidden="true">🏛️</span>
         <div class="loc-name">Montpelier</div>
         <div class="loc-city">Orange County, VA</div>
@@ -949,7 +944,7 @@
         <a href="https://www.montpelier.org/visit/" target="_blank" rel="noopener" class="loc-link">Plan Your Visit →</a>
       </div>
 
-      <div class="loc-card reveal">
+      <div class="loc-card">
         <span class="loc-flag" aria-hidden="true">🦅</span>
         <div class="loc-name">Adams National Historical Park</div>
         <div class="loc-city">Quincy, MA</div>
@@ -957,7 +952,7 @@
         <a href="https://www.nps.gov/adam/index.htm" target="_blank" rel="noopener" class="loc-link">Plan Your Visit →</a>
       </div>
 
-      <div class="loc-card reveal">
+      <div class="loc-card">
         <span class="loc-flag" aria-hidden="true">🕯️</span>
         <div class="loc-name">Franklin Court &amp; Museum</div>
         <div class="loc-city">Philadelphia, PA</div>
@@ -965,7 +960,7 @@
         <a href="https://www.nps.gov/inde/learn/historyculture/franklincourt.htm" target="_blank" rel="noopener" class="loc-link">Plan Your Visit →</a>
       </div>
 
-      <div class="loc-card reveal">
+      <div class="loc-card">
         <span class="loc-flag" aria-hidden="true">📜</span>
         <div class="loc-name">Hamilton Grange National Memorial</div>
         <div class="loc-city">New York City, NY</div>
@@ -1049,16 +1044,6 @@
     starsEl.appendChild(s);
   }
 
-  // Reveal on scroll
-  var els = document.querySelectorAll('.reveal');
-  if ('IntersectionObserver' in window) {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
-    els.forEach(function (el) { io.observe(el); });
-  } else {
-    els.forEach(function (el) { el.classList.add('in'); });
-  }
 </script>
 </body>
 </html>
