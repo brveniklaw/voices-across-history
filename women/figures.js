@@ -45,7 +45,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Elizabeth_I_Darnley_Portrait.jpg?width=500",
     "portraitCredit": "The Darnley Portrait, c. 1575 — National Portrait Gallery, London",
     "monogram": "E·R",
-    "voiceProfile": { "pitch": 1.08, "rate": 0.86, "voiceHint": ["female", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "bf_emma", "pitch": 1.08, "rate": 0.86, "voiceHint": ["female", "english"], "lang": "en-GB" },
     "primarySources": [
       "Speech to the troops at Tilbury (1588)",
       "The Golden Speech to Parliament (1601)",
@@ -67,7 +67,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Mary_Wollstonecraft_by_John_Opie_(c._1797).jpg?width=500",
     "portraitCredit": "John Opie, c. 1797 — National Portrait Gallery, London",
     "monogram": "MW",
-    "voiceProfile": { "pitch": 1.06, "rate": 0.9, "voiceHint": ["female", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "bf_alice", "pitch": 1.06, "rate": 0.9, "voiceHint": ["female", "english"], "lang": "en-GB" },
     "primarySources": [
       "A Vindication of the Rights of Woman (1792)",
       "A Vindication of the Rights of Men (1790)",
@@ -89,7 +89,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Sojourner_Truth_c1864.jpg?width=500",
     "portraitCredit": "Carte de visite photograph, c. 1864",
     "monogram": "ST",
-    "voiceProfile": { "pitch": 0.96, "rate": 0.86, "voiceHint": ["female", "english"], "lang": "en-US" },
+    "voiceProfile": { "kokoroVoice": "af_kore", "pitch": 0.96, "rate": 0.86, "voiceHint": ["female", "english"], "lang": "en-US" },
     "primarySources": [
       "The Narrative of Sojourner Truth (1850)",
       "Speech at the Akron Women's Rights Convention (1851), as reported in the Anti-Slavery Bugle",
@@ -110,7 +110,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Elizabeth_Cady_Stanton.jpg?width=500",
     "portraitCredit": "Photograph, 19th century",
     "monogram": "ECS",
-    "voiceProfile": { "pitch": 1.0, "rate": 0.88, "voiceHint": ["female", "english"], "lang": "en-US" },
+    "voiceProfile": { "kokoroVoice": "af_sarah", "pitch": 1.0, "rate": 0.88, "voiceHint": ["female", "english"], "lang": "en-US" },
     "primarySources": [
       "Declaration of Sentiments (1848)",
       "The Solitude of Self (1892)",
@@ -132,7 +132,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Florence_Nightingale_(H_Hering_NPG_x82368).jpg?width=500",
     "portraitCredit": "Henry Hering, photograph — National Portrait Gallery, London",
     "monogram": "FN",
-    "voiceProfile": { "pitch": 1.08, "rate": 0.88, "voiceHint": ["female", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "bf_lily", "pitch": 1.08, "rate": 0.88, "voiceHint": ["female", "english"], "lang": "en-GB" },
     "primarySources": [
       "Notes on Nursing: What It Is, and What It Is Not (1859)",
       "Notes on Matters Affecting the Health, Efficiency, and Hospital Administration of the British Army (1858)",
@@ -154,7 +154,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Mary_Garrity_-_Ida_B._Wells-Barnett_-_Google_Art_Project_-_restoration_crop.jpg?width=500",
     "portraitCredit": "Mary Garrity, photograph, c. 1893 — National Portrait Gallery, Smithsonian",
     "monogram": "IBW",
-    "voiceProfile": { "pitch": 1.02, "rate": 0.9, "voiceHint": ["female", "english"], "lang": "en-US" },
+    "voiceProfile": { "kokoroVoice": "af_alloy", "pitch": 1.02, "rate": 0.9, "voiceHint": ["female", "english"], "lang": "en-US" },
     "primarySources": [
       "Southern Horrors: Lynch Law in All Its Phases (1892)",
       "The Red Record (1895)",
@@ -176,7 +176,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Marie_Curie_c1920.jpg?width=500",
     "portraitCredit": "Henri Manuel, c. 1920",
     "monogram": "MC",
-    "voiceProfile": { "pitch": 1.1, "rate": 0.88, "voiceHint": ["female", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "af_aoede", "pitch": 1.1, "rate": 0.88, "voiceHint": ["female", "english"], "lang": "en-GB" },
     "primarySources": [
       "Researches on Radioactive Substances (1903 thesis)",
       "Nobel Lecture (1911)",
@@ -197,7 +197,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Eleanor_Roosevelt_portrait_1933_(cropped).jpg?width=500",
     "portraitCredit": "Photograph, 1933",
     "monogram": "ER",
-    "voiceProfile": { "pitch": 1.06, "rate": 0.9, "voiceHint": ["female", "english"], "lang": "en-US" },
+    "voiceProfile": { "kokoroVoice": "af_bella", "pitch": 1.06, "rate": 0.9, "voiceHint": ["female", "english"], "lang": "en-US" },
     "primarySources": [
       "My Day newspaper columns (1935–1962)",
       "This Is My Story (1937)",
@@ -219,7 +219,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait_of_Susan_B._Anthony.jpg?width=500",
     "portraitCredit": "Photograph, 19th century",
     "monogram": "SA",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "af_nicole", 
       "pitch": 1.05,
       "rate": 0.9,
       "voiceHint": [
@@ -250,7 +250,7 @@ export const FIGURES = [
     "portraitCredit": "Cassandra Austen, c. 1810 — National Portrait Gallery, London",
     "monogram": "JA",
     "limitedRecord": true,
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bf_lily", 
       "pitch": 1.1,
       "rate": 0.92,
       "voiceHint": [
@@ -280,7 +280,7 @@ export const FIGURES = [
     "limitedRecord": true,
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Ada_Lovelace_portrait.jpg?width=500",
     "portraitCredit": "Alfred Edward Chalon, c. 1840 — Science Museum, London",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bf_isabella", 
       "pitch": 1.12,
       "rate": 0.9,
       "voiceHint": [
@@ -305,7 +305,7 @@ export const FIGURES = [
     "field": "Reformers",
     "portrait": "/portraits/abigail.jpg",
     "portraitCredit": "Gilbert Stuart, c. 1800–1815 — National Gallery of Art",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "af_heart", 
       "pitch": 1.15,
       "rate": 0.88,
       "voiceHint": [
@@ -341,7 +341,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Amelia_Earhart,_1928.jpg?width=500",
     "portraitCredit": "Photograph, 1928",
     "monogram": "AE",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "af_nova", 
       "pitch": 1.08,
       "rate": 0.95,
       "voiceHint": [

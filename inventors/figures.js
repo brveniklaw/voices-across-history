@@ -40,7 +40,7 @@ export const FIGURES = [
     "color": "#8A5A28",
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Leonardo_self.jpg?width=500",
     "portraitCredit": "Self-portrait in red chalk, c. 1512 \u2014 Biblioteca Reale, Turin",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bm_fable", 
       "pitch": 0.9,
       "rate": 0.86,
       "voiceHint": [
@@ -70,7 +70,7 @@ export const FIGURES = [
     "color": "#5A4A2A",
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Justus_Sustermans_-_Portrait_of_Galileo_Galilei,_1636.jpg?width=500",
     "portraitCredit": "Justus Sustermans, 1636 \u2014 National Maritime Museum",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_fenrir", 
       "pitch": 0.86,
       "rate": 0.88,
       "voiceHint": [
@@ -99,7 +99,7 @@ export const FIGURES = [
     "color": "#3A4A6B",
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/GodfreyKneller-IsaacNewton-1689.jpg?width=500",
     "portraitCredit": "Godfrey Kneller, 1689 \u2014 Farleigh House",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bm_george", 
       "pitch": 0.88,
       "rate": 0.86,
       "voiceHint": [
@@ -128,7 +128,7 @@ export const FIGURES = [
     "limitedRecord": true,
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Ada_Lovelace_portrait.jpg?width=500",
     "portraitCredit": "Alfred Edward Chalon, c. 1840 \u2014 Science Museum, London",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bf_isabella", 
       "pitch": 1.12,
       "rate": 0.9,
       "voiceHint": [
@@ -156,7 +156,7 @@ export const FIGURES = [
     "color": "#6B5A20",
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas_Edison2.jpg?width=500",
     "portraitCredit": "Louis Bachrach, c. 1922 \u2014 Library of Congress",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_eric", 
       "pitch": 0.86,
       "rate": 0.92,
       "voiceHint": [
@@ -184,7 +184,7 @@ export const FIGURES = [
     "color": "#2A4A6B",
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Tesla_circa_1890.jpeg?width=500",
     "portraitCredit": "Napoleon Sarony, c. 1890",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_onyx", 
       "pitch": 0.92,
       "rate": 0.88,
       "voiceHint": [
@@ -212,7 +212,7 @@ export const FIGURES = [
     "color": "#3A6B5A",
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Marie_Curie_c1920.jpg?width=500",
     "portraitCredit": "Henri Manuel, c. 1920",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "af_aoede", 
       "pitch": 1.1,
       "rate": 0.88,
       "voiceHint": [
@@ -240,7 +240,7 @@ export const FIGURES = [
     "color": "#6B4A2A",
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Wright_Brothers_in_1910.jpg?width=500",
     "portraitCredit": "Photograph, 1910",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_puck", 
       "pitch": 0.9,
       "rate": 0.92,
       "voiceHint": [
@@ -270,7 +270,7 @@ export const FIGURES = [
     "color": "#2A5A4A",
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Alan_Turing_Aged_16.jpg?width=500",
     "portraitCredit": "Alan Turing aged 16, c. 1928",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bm_lewis", 
       "pitch": 0.98,
       "rate": 0.95,
       "voiceHint": [
@@ -299,7 +299,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Florence_Nightingale_(H_Hering_NPG_x82368).jpg?width=500",
     "portraitCredit": "Henry Hering, photograph — National Portrait Gallery, London",
     "monogram": "FN",
-    "voiceProfile": { "pitch": 1.08, "rate": 0.88, "voiceHint": ["female", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "bf_lily", "pitch": 1.08, "rate": 0.88, "voiceHint": ["female", "english"], "lang": "en-GB" },
     "primarySources": [
       "Notes on Nursing: What It Is, and What It Is Not (1859)",
       "Notes on Matters Affecting the Health, Efficiency, and Hospital Administration of the British Army (1858)",

@@ -37,7 +37,7 @@ export const FIGURES = [
     "era": "Ancient Greece",
     "portrait": "/portraits/socrates.jpg",
     "portraitCredit": "Roman copy of Greek original, Louvre Museum",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bm_george", 
       "pitch": 0.88,
       "rate": 0.85,
       "lang": "en-GB",
@@ -68,7 +68,7 @@ export const FIGURES = [
     "era": "Ancient Greece",
     "portrait": "/portraits/aristotle.jpg",
     "portraitCredit": "Roman copy of Greek original, Palazzo Altemps, Rome",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bm_fable", 
       "pitch": 0.87,
       "rate": 0.87,
       "lang": "en-GB",
@@ -97,7 +97,7 @@ export const FIGURES = [
     "era": "Roman Empire",
     "portrait": "/portraits/marcus.jpg",
     "portraitCredit": "Head of Marcus Aurelius \u2014 Archaeological Museum of Heraklion / Commons",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_fenrir", 
       "pitch": 0.86,
       "rate": 0.84,
       "lang": "en-GB",
@@ -122,7 +122,7 @@ export const FIGURES = [
     "era": "Roman Greece",
     "portrait": "/portraits/epictetus.jpg",
     "portraitCredit": "Oxford edition frontispiece, 1715",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bm_daniel", 
       "pitch": 0.9,
       "rate": 0.9,
       "lang": "en-GB",
@@ -148,7 +148,7 @@ export const FIGURES = [
     "era": "Enlightenment England",
     "portrait": "/portraits/locke.jpg",
     "portraitCredit": "Godfrey Kneller, 1697 \u2014 Hermitage Museum",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bm_lewis", 
       "pitch": 0.9,
       "rate": 0.88,
       "lang": "en-GB",
@@ -175,7 +175,7 @@ export const FIGURES = [
     "era": "French Enlightenment",
     "portrait": "/portraits/rousseau.jpg",
     "portraitCredit": "Painted portrait \u2014 Commons",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_puck", 
       "pitch": 0.92,
       "rate": 0.9,
       "lang": "en-GB",
@@ -202,7 +202,7 @@ export const FIGURES = [
     "era": "German Enlightenment",
     "portrait": "/portraits/kant.jpg",
     "portraitCredit": "Anonymous portrait, c. 1790 \u2014 Kant-Museum, K\u00f6nigsberg",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_onyx", 
       "pitch": 0.87,
       "rate": 0.83,
       "lang": "en-GB",
@@ -229,7 +229,7 @@ export const FIGURES = [
     "era": "19th Century Germany",
     "portrait": "/portraits/nietzsche.jpg",
     "portraitCredit": "Friedrich Hartmann, 1875 \u2014 Nietzsche Archive",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_liam", 
       "pitch": 0.95,
       "rate": 0.95,
       "lang": "en-GB",
@@ -257,7 +257,7 @@ export const FIGURES = [
     "era": "American Transcendentalism",
     "portrait": "/portraits/emerson.jpg",
     "portraitCredit": "Photograph, c. 1857 \u2014 Library of Congress",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_michael", 
       "pitch": 0.9,
       "rate": 0.88,
       "lang": "en-US",
@@ -286,7 +286,7 @@ export const FIGURES = [
     "era": "American Transcendentalism",
     "portrait": "/portraits/thoreau.jpg",
     "portraitCredit": "Benjamin Maxham daguerreotype, 1856 \u2014 Morgan Library",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_echo", 
       "pitch": 0.9,
       "rate": 0.87,
       "lang": "en-US",
@@ -314,7 +314,7 @@ export const FIGURES = [
     "era": "Victorian England",
     "portrait": "/portraits/mill.jpg",
     "portraitCredit": "London Stereoscopic Co., c. 1870 \u2014 National Portrait Gallery / Commons",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bm_george", 
       "pitch": 0.9,
       "rate": 0.9,
       "lang": "en-GB",
@@ -342,7 +342,7 @@ export const FIGURES = [
     "era": "Scottish Enlightenment",
     "portrait": "/portraits/hume.jpg",
     "portraitCredit": "David Hume portrait \u2014 Commons",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bm_fable", 
       "pitch": 0.88,
       "rate": 0.87,
       "lang": "en-GB-scotland",
@@ -374,7 +374,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Mary_Wollstonecraft_by_John_Opie_(c._1797).jpg?width=500",
     "portraitCredit": "John Opie, c. 1797 — National Portrait Gallery, London",
     "monogram": "MW",
-    "voiceProfile": { "pitch": 1.06, "rate": 0.9, "voiceHint": ["female", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "bf_alice", "pitch": 1.06, "rate": 0.9, "voiceHint": ["female", "english"], "lang": "en-GB" },
     "primarySources": [
       "A Vindication of the Rights of Woman (1792)",
       "A Vindication of the Rights of Men (1790)",

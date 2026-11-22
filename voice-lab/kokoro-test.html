@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kokoro Voice Test</title>
+<!--
+  Voices Across History — Kokoro voice test (not part of any deployed app).
+  Open this file in Chrome or Edge. The first "Load voices" downloads the free Kokoro voice
+  model (about 90 MB) from Hugging Face; the browser keeps it, so later visits load quickly.
+  Compare each figure in Kokoro against the device voice the live site uses today, change the
+  Kokoro voice or pace per figure, then copy the picks at the bottom to send back.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #100C06; --ink2: #1A1208; --raise: #2A1E0E;
+    --parchment: #F5EDD6; --gold: #B8892A; --gold-light: #D4A84B; --gold-pale: #E2C77A;
+    --text: rgba(245,237,214,0.88); --soft: rgba(245,237,214,0.66);
+    --line: rgba(184,137,42,0.25); --line-strong: rgba(184,137,42,0.55);
+    --ok: #8FBF7F; --warn: #E0A458;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--ink); color: var(--text); font: 18px/1.55 "EB Garamond", Georgia, serif; padding: 32px 16px 64px; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 { font-family: Cinzel, Georgia, serif; color: var(--gold-pale); font-size: clamp(1.4rem, 4vw, 2rem); letter-spacing: .06em; }
+  .lede { color: var(--soft); margin: .5rem 0 1.5rem; max-width: 60ch; }
+  .panel { border: 1px solid var(--line); background: var(--ink2); border-radius: 4px; padding: 16px 18px; margin-bottom: 20px; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  label.small { font-size: .85rem; color: var(--soft); display: flex; gap: 6px; align-items: center; }
+  select, input[type=range], textarea { accent-color: var(--gold); }
+  select, textarea { background: var(--raise); color: var(--parchment); border: 1px solid var(--line-strong); border-radius: 3px; font: inherit; font-size: .9rem; padding: 4px 6px; }
+  textarea { width: 100%; min-height: 70px; padding: 8px 10px; font-size: 1rem; }
+  button { font-family: Cinzel, Georgia, serif; font-weight: 700; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; border-radius: 2px; padding: 9px 14px; cursor: pointer; border: 1px solid var(--line-strong); background: rgba(26,18,8,.5); color: var(--gold-pale); }
+  button:hover:not(:disabled) { border-color: var(--gold-light); color: var(--parchment); }
+  button.primary { background: linear-gradient(135deg, #E6BE62, var(--gold-light) 45%, var(--gold)); color: #1A1208; border: 0; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.playing { border-color: var(--ok); color: var(--ok); }
+  #status { font-size: .95rem; color: var(--soft); }
+  #status.ok { color: var(--ok); } #status.warn { color: var(--warn); }
+  .bar { height: 4px; background: var(--raise); border-radius: 2px; overflow: hidden; margin-top: 10px; display: none; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .2s; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); }
+  .fig h2 { font-family: Cinzel, Georgia, serif; font-size: 1.05rem; color: var(--parchment); letter-spacing: .04em; }
+  .fig .meta { font-size: .85rem; color: var(--soft); margin-bottom: 8px; }
+  .fig blockquote { font-style: italic; border-left: 2px solid var(--line-strong); padding-left: 12px; margin: 8px 0 12px; }
+  .fig .controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-bottom: 10px; }
+  .fig .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  .timing { font-size: .8rem; color: var(--soft); margin-top: 6px; min-height: 1.2em; }
+  pre { white-space: pre-wrap; font-size: .8rem; background: var(--raise); padding: 10px; border-radius: 3px; color: var(--parchment); margin-top: 10px; }
+  .note { font-size: .9rem; color: var(--soft); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kokoro Voice Test</h1>
+  <p class="lede">Compare the free Kokoro AI voice with the device voice the site uses today. Try each figure both ways, adjust the Kokoro voice and pace until it fits, then copy your picks at the bottom.</p>
+
+  <div class="panel">
+    <div class="row">
+      <button class="primary" id="load">Load voices (about 90 MB, first time only)</button>
+      <label class="small">Quality
+        <select id="dtype">
+          <option value="q8" selected>Standard (≈90 MB)</option>
+          <option value="fp16">Balanced (≈165 MB, what the site uses)</option>
+          <option value="fp32">Highest (≈330 MB)</option>
+        </select>
+      </label>
+      <label class="small">Engine
+        <select id="device">
+          <option value="wasm" selected>Compatible (CPU)</option>
+          <option value="webgpu">Faster (WebGPU, Chrome/Edge)</option>
+        </select>
+      </label>
+    </div>
+    <p id="status" style="margin-top:10px">Not loaded yet. "Device voice" buttons work right away.</p>
+    <div class="bar" id="bar"><i></i></div>
+  </div>
+
+  <div class="grid" id="figures"></div>
+
+  <div class="panel" style="margin-top:20px">
+    <h2 style="font-family:Cinzel,Georgia,serif;font-size:1rem;color:var(--parchment)">Try your own line</h2>
+    <p class="note" style="margin:4px 0 8px">Paste a real reply from the site to hear how a longer answer sounds. It uses the first figure's settings unless you choose another.</p>
+    <textarea id="custom">Liberty, when it begins to take root, is a plant of rapid growth. Yet it must be tended, for the habits of a free people are not formed in a season. I have seen this with my own eyes, and I trust that you, who come after us, will see it too.</textarea>
+    <div class="row" style="margin-top:10px">
+      <label class="small">As <select id="customFig"></select></label>
+      <button data-k="custom" disabled>Kokoro voice</button>
+      <button data-d="custom">Device voice</button>
+      <button id="stopAll">Stop</button>
+    </div>
+    <div class="timing" id="customTiming"></div>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="font-family:Cinzel,Georgia,serif;font-size:1rem;color:var(--parchment)">Your picks</h2>
+      <button id="copy">Copy picks</button>
+    </div>
+    <pre id="picks"></pre>
+    <p class="note" style="margin-top:8px">The Kokoro voices are American or British English only, so figures from other countries get the closest fit. Lines are public-domain words of each figure.</p>
+  </div>
+</div>
+
+<script type="module">
+// Figures to compare. "pitch/rate/lang/voiceHint" match the live site's figures.js;
+// "kokoro" and "speed" are the suggested starting Kokoro voice and pace.
+const FIGURES = [
+  { id: "washington", name: "George Washington", note: "Republic · Virginia", line: "Observe good faith and justice towards all nations; cultivate peace and harmony with all.", src: "Farewell Address, 1796", profile: { pitch: .85, rate: .88, voiceHint: ["male"], lang: "en-US" }, kokoro: "am_fenrir", speed: 0.88 },
+  { id: "franklin", name: "Benjamin Franklin", note: "Republic · Pennsylvania", line: "Our new Constitution is now established, and has an appearance that promises permanency; but in this world nothing can be said to be certain, except death and taxes.", src: "Letter to Jean-Baptiste Le Roy, 1789", profile: { pitch: .82, rate: .88, voiceHint: ["male"], lang: "en-US" }, kokoro: "am_puck", speed: 0.9 },
+  { id: "jefferson", name: "Thomas Jefferson", note: "Republic · Virginia", line: "We hold these truths to be self-evident, that all men are created equal, that they are endowed by their Creator with certain unalienable Rights.", src: "Declaration of Independence, 1776", profile: { pitch: .92, rate: .9, voiceHint: ["male"], lang: "en-US" }, kokoro: "am_michael", speed: 0.92 },
+  { id: "paine", name: "Thomas Paine", note: "Republic · English-born", line: "These are the times that try men's souls. The summer soldier and the sunshine patriot will, in this crisis, shrink from the service of their country.", src: "The American Crisis, 1776", profile: { pitch: .95, rate: .98, voiceHint: ["male"], lang: "en-GB" }, kokoro: "bm_george", speed: 1.0 },
+  { id: "abigail", name: "Abigail Adams", note: "Republic · Massachusetts", line: "Remember the Ladies, and be more generous and favourable to them than your ancestors.", src: "Letter to John Adams, 1776", profile: { pitch: 1.15, rate: .88, voiceHint: ["female"], lang: "en-US" }, kokoro: "af_heart", speed: 0.92 },
+  { id: "elizabeth", name: "Elizabeth I", note: "Great Women · England", line: "I know I have the body of a weak and feeble woman; but I have the heart and stomach of a king, and of a king of England too.", src: "Speech at Tilbury, 1588", profile: { pitch: 1.08, rate: .86, voiceHint: ["female"], lang: "en-GB" }, kokoro: "bf_emma", speed: 0.88 },
+  { id: "lovelace", name: "Ada Lovelace", note: "Inventors · England", line: "The Analytical Engine weaves algebraical patterns just as the Jacquard loom weaves flowers and leaves.", src: "Notes on the Analytical Engine, 1843", profile: { pitch: 1.12, rate: .9, voiceHint: ["female"], lang: "en-GB" }, kokoro: "bf_isabella", speed: 0.95 },
+  { id: "hume", name: "David Hume", note: "Philosophers · Scotland", line: "Reason is, and ought only to be the slave of the passions, and can never pretend to any other office than to serve and obey them.", src: "A Treatise of Human Nature, 1739", profile: { pitch: .88, rate: .87, voiceHint: ["male"], lang: "en-GB-scotland" }, kokoro: "bm_fable", speed: 0.9 },
+];
+
+// Kokoro's voice list (name shown, then grade from the model's own notes). Filled in after loading.
+let KOKORO_VOICES = ["af_heart","af_bella","af_nicole","af_sarah","af_sky","af_nova","af_kore","af_aoede","af_alloy","af_jessica","af_river","am_adam","am_echo","am_eric","am_fenrir","am_liam","am_michael","am_onyx","am_puck","am_santa","bf_alice","bf_emma","bf_isabella","bf_lily","bm_daniel","bm_fable","bm_george","bm_lewis"].map((id) => ({ id, label: id }));
+
+const $ = (s, el = document) => el.querySelector(s);
+const statusEl = $("#status"), bar = $("#bar"), barFill = $("#bar > i");
+const setStatus = (msg, cls = "") => { statusEl.textContent = msg; statusEl.className = cls; };
+let tts = null, audioCtx = null, currentSource = null, playToken = 0, loadedDtype = null;
+const picks = Object.fromEntries(FIGURES.map((f) => [f.id, { kokoro: f.kokoro, speed: f.speed }]));
+
+// ── Render figure cards ─────────────────────────────────────────────────────
+function voiceOptions(selected) {
+  return KOKORO_VOICES.map((v) => `<option value="${v.id}"${v.id === selected ? " selected" : ""}>${v.label}</option>`).join("");
+}
+function render() {
+  $("#figures").innerHTML = FIGURES.map((f) => `
+    <div class="panel fig" data-id="${f.id}">
+      <h2>${f.name}</h2>
+      <div class="meta">${f.note}</div>
+      <blockquote>${f.line}<br><span class="note">— ${f.src}</span></blockquote>
+      <div class="controls">
+        <label class="small">Kokoro voice <select class="kv">${voiceOptions(picks[f.id].kokoro)}</select></label>
+        <label class="small">Pace <input type="range" class="sp" min="0.75" max="1.15" step="0.01" value="${picks[f.id].speed}"><span class="spv">${picks[f.id].speed.toFixed(2)}</span></label>
+      </div>
+      <div class="buttons">
+        <button data-k="${f.id}" ${tts ? "" : "disabled"}>Kokoro voice</button>
+        <button data-d="${f.id}">Device voice (today)</button>
+      </div>
+      <div class="timing"></div>
+    </div>`).join("");
+  $("#customFig").innerHTML = FIGURES.map((f) => `<option value="${f.id}">${f.name}</option>`).join("");
+  showPicks();
+}
+function showPicks() {
+  $("#picks").textContent = FIGURES.map((f) => `${f.name}: ${picks[f.id].kokoro}, pace ${picks[f.id].speed.toFixed(2)}`).join("\n");
+}
+document.addEventListener("input", (e) => {
+  const card = e.target.closest(".fig"); if (!card) return;
+  const p = picks[card.dataset.id];
+  if (e.target.matches(".kv")) p.kokoro = e.target.value;
+  if (e.target.matches(".sp")) { p.speed = +e.target.value; $(".spv", card).textContent = p.speed.toFixed(2); }
+  showPicks();
+});
+
+// ── Device voice (same choice logic as the live site) ───────────────────────
+const FEMALE = /female|woman|samantha|victoria|karen|serena|moira|tessa|fiona|kate|susan|martha|allison|ava|zira|hazel|libby|sonia|jenny|aria|emma|amy|joanna|salli|kimberly|nicole|catherine|zoe|google us english$/i;
+const MALE = /\bmale\b|daniel|arthur|oliver|george|fred|alex|tom|aaron|david|mark|ryan|guy|eric|brian|matthew|justin|joey|thomas|james|rishi|google uk english male/i;
+const QUALITY = /natural|neural|enhanced|premium|online|google/i;
+function deviceVoice(profile) {
+  const voices = speechSynthesis.getVoices(); if (!voices.length) return null;
+  const want = (profile.lang || "en-US").toLowerCase().replace("-scotland", "");
+  const female = profile.voiceHint.includes("female");
+  const norm = (v) => String(v.lang || "").replace("_", "-").toLowerCase();
+  const genderOk = (v) => (female ? FEMALE.test(v.name) && !/\bmale\b/i.test(v.name.replace(/female/i, "")) : MALE.test(v.name) && !/female/i.test(v.name));
+  const score = (v) => (QUALITY.test(v.name) ? 2 : 0) + (v.localService ? 0 : 1);
+  for (const tier of [voices.filter((v) => norm(v) === want), voices.filter((v) => norm(v).startsWith("en"))]) {
+    const g = tier.filter(genderOk).sort((a, b) => score(b) - score(a));
+    if (g.length) return g[0];
+  }
+  return voices.find((v) => norm(v).startsWith("en")) || null;
+}
+function playDevice(text, profile, btn, timingEl) {
+  stopAll();
+  const u = new SpeechSynthesisUtterance(text);
+  const v = deviceVoice(profile);
+  if (v) { u.voice = v; u.lang = v.lang; }
+  u.pitch = Math.min(1.12, Math.max(0.88, 1 + (profile.pitch - 1) * 0.6));
+  u.rate = profile.rate;
+  btn.classList.add("playing");
+  u.onend = u.onerror = () => btn.classList.remove("playing");
+  timingEl.textContent = v ? `Device voice: ${v.name}` : "Device voice: browser default";
+  speechSynthesis.speak(u);
+}
+
+// ── Kokoro ──────────────────────────────────────────────────────────────────
+async function loadKokoro() {
+  const btn = $("#load"); btn.disabled = true;
+  const dtype = $("#dtype").value;
+  let device = $("#device").value;
+  if (device === "webgpu" && !navigator.gpu) { device = "wasm"; $("#device").value = "wasm"; }
+  setStatus("Loading the voice library…"); bar.style.display = "block";
+  const t0 = performance.now();
+  try {
+    const { KokoroTTS } = await import("https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm");
+    const files = {};
+    tts = await KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX", {
+      dtype, device,
+      progress_callback: (p) => {
+        if (p.status === "progress" && p.total) {
+          files[p.file] = [p.loaded, p.total];
+          const [l, t] = Object.values(files).reduce((a, [x, y]) => [a[0] + x, a[1] + y], [0, 0]);
+          barFill.style.width = `${Math.round((l / t) * 100)}%`;
+          setStatus(`Downloading the voice model… ${(l / 1e6).toFixed(0)} of ${(t / 1e6).toFixed(0)} MB`);
+        }
+      },
+    });
+    loadedDtype = dtype;
+    KOKORO_VOICES = Object.entries(tts.voices).map(([id, v]) => ({ id, label: `${id.slice(3)} · ${v.language === "en-us" ? "American" : "British"} ${v.gender.toLowerCase()} · grade ${v.overallGrade}` }));
+    render();
+    bar.style.display = "none";
+    setStatus(`Voices ready in ${((performance.now() - t0) / 1000).toFixed(1)} s (${dtype === "q8" ? "standard" : "highest"} quality, ${device === "webgpu" ? "WebGPU" : "CPU"}). The first clip takes a few extra seconds to warm up.`, "ok");
+  } catch (err) {
+    console.error(err);
+    bar.style.display = "none"; btn.disabled = false;
+    setStatus(`Couldn't load Kokoro: ${err.message}. Try "Compatible (CPU)" and standard quality, or another browser.`, "warn");
+  }
+}
+
+// Speak sentence by sentence: each one starts playing as soon as it is ready while the next is made.
+const sentences = (text) => (text.match(/[^.!?]+(?:[.!?]+["')\]]*|$)\s*/g) || [text]).map((s) => s.trim()).filter(Boolean);
+async function playKokoro(text, pick, btn, timingEl) {
+  stopAll();
+  const token = ++playToken;
+  audioCtx = audioCtx || new AudioContext();
+  await audioCtx.resume();
+  btn.classList.add("playing");
+  const t0 = performance.now();
+  let when = audioCtx.currentTime, first = null, total = 0;
+  try {
+    for (const s of sentences(text)) {
+      const out = await tts.generate(s, { voice: pick.kokoro, speed: pick.speed });
+      if (token !== playToken) return;
+      if (loadedDtype === "fp16") for (let i = 0; i < out.audio.length; i++) out.audio[i] = Math.max(-1, Math.min(1, out.audio[i] * 0.5)); // same level fix as the site
+      if (first === null) { first = (performance.now() - t0) / 1000; timingEl.textContent = `Kokoro ${pick.kokoro}: first sound after ${first.toFixed(1)} s`; }
+      const buf = audioCtx.createBuffer(1, out.audio.length, out.sampling_rate);
+      buf.copyToChannel(out.audio, 0);
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf; src.connect(audioCtx.destination);
+      when = Math.max(when, audioCtx.currentTime + 0.05);
+      src.start(when);
+      when += buf.duration + 0.12; // short breath between sentences
+      total += buf.duration;
+      currentSource = src;
+    }
+    const left = (when - audioCtx.currentTime) * 1000;
+    timingEl.textContent = `Kokoro ${pick.kokoro}: first sound after ${first.toFixed(1)} s · ${total.toFixed(1)} s of speech made in ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+    setTimeout(() => { if (token === playToken) btn.classList.remove("playing"); }, Math.max(0, left));
+  } catch (err) {
+    console.error(err);
+    btn.classList.remove("playing");
+    timingEl.textContent = `Kokoro couldn't speak: ${err.message}`;
+  }
+}
+function stopAll() {
+  playToken++;
+  speechSynthesis.cancel();
+  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  document.querySelectorAll("button.playing").forEach((b) => b.classList.remove("playing"));
+}
+
+// ── Wiring ──────────────────────────────────────────────────────────────────
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "load") return loadKokoro();
+  if (b.id === "stopAll") return stopAll();
+  if (b.id === "copy") { navigator.clipboard.writeText($("#picks").textContent).then(() => { b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy picks"), 1500); }); return; }
+  const id = b.dataset.k || b.dataset.d; if (!id) return;
+  const isCustom = id === "custom";
+  const fig = FIGURES.find((f) => f.id === (isCustom ? $("#customFig").value : id));
+  const text = isCustom ? $("#custom").value : fig.line;
+  const timingEl = isCustom ? $("#customTiming") : $(".timing", b.closest(".fig"));
+  if (b.dataset.k) playKokoro(text, picks[fig.id], b, timingEl);
+  else playDevice(text, fig.profile, b, timingEl);
+});
+const enableCustom = () => { const b = $('[data-k="custom"]'); if (b) b.disabled = !tts; };
+new MutationObserver(enableCustom).observe($("#figures"), { childList: true });
+speechSynthesis.getVoices();
+// The graphics-chip engine is several times faster where the browser has it (Chrome/Edge on most
+// computers). It runs best with the full-size model, so that becomes the default there.
+(async () => {
+  try {
+    if (navigator.gpu && (await navigator.gpu.requestAdapter())) {
+      $("#device").value = "webgpu";
+      $("#dtype").value = "fp16";
+      $("#load").textContent = "Load voices (about 165 MB, first time only)";
+    }
+  } catch {}
+})();
+$("#dtype").addEventListener("change", (e) => { $("#load").textContent = `Load voices (about ${{ q8: 90, fp16: 165, fp32: 330 }[e.target.value]} MB, first time only)`; });
+render();
+</script>
+</body>
+</html>

@@ -31,6 +31,31 @@ const FEMALE = /female|woman|samantha|victoria|karen|serena|moira|tessa|fiona|ka
 const MALE = /\bmale\b|daniel|arthur|oliver|george|fred|alex|tom|aaron|david|mark|ryan|guy|eric|brian|matthew|justin|joey|thomas|james|rishi|google uk english male/i;
 const QUALITY = /natural|neural|enhanced|premium|online|google/i;
 
+// Each figure keeps the voice it was first given for the rest of the visit, and figures are
+// spread across the device's best voices, so two speakers at a roundtable don't sound identical.
+const assignedVoice = new Map(); // figure key → voice name
+const figureKey = (profile) => profile.key || JSON.stringify(profile);
+function hashString(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function spreadAcross(pool, profile) {
+  const key = figureKey(profile);
+  const kept = assignedVoice.get(key);
+  const keptVoice = kept && pool.find((v) => v.name === kept);
+  if (keptVoice) return keptVoice;
+  const taken = new Set([...assignedVoice.entries()].filter(([k]) => k !== key).map(([, name]) => name));
+  const start = hashString(key) % pool.length;
+  let choice = pool[start];
+  for (let i = 0; i < pool.length; i++) {
+    const v = pool[(start + i) % pool.length];
+    if (!taken.has(v.name)) { choice = v; break; }
+  }
+  assignedVoice.set(key, choice.name);
+  return choice;
+}
+
 function pickVoice(profile = {}) {
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
@@ -39,7 +64,12 @@ function pickVoice(profile = {}) {
   const norm = (v) => String(v.lang || "").replace("_", "-").toLowerCase();
   const genderOk = (v) => (female ? FEMALE.test(v.name) && !/\bmale\b/i.test(v.name.replace(/female/i, "")) : MALE.test(v.name) && !/female/i.test(v.name));
   const score = (v) => (QUALITY.test(v.name) ? 2 : 0) + (v.localService ? 0 : 1);
-  const best = (list) => list.sort((a, b) => score(b) - score(a))[0];
+  // Only the highest-quality voices in a tier are shared out; a figure never drops to a worse voice to be distinct.
+  const best = (list) => {
+    const top = Math.max(...list.map(score));
+    const pool = list.filter((v) => score(v) === top).sort((a, b) => a.name.localeCompare(b.name));
+    return spreadAcross(pool, profile);
+  };
   const tiers = [];
   if (want === "en-gb-scotland") {
     tiers.push(voices.filter((v) => /fiona|scot/i.test(v.name) || norm(v).includes("scotland")));
@@ -59,18 +89,270 @@ function pickVoice(profile = {}) {
   return null;
 }
 
-function speakText(text, voiceProfile = {}, onEnd, { queue = false } = {}) {
-  if (!window.speechSynthesis) { onEnd && onEnd(); return; }
-  if (!queue) window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(forSpeech(text));
-  const chosen = pickVoice(voiceProfile);
-  if (chosen) { utter.voice = chosen; utter.lang = chosen.lang; } else { utter.lang = voiceProfile.lang === "en-GB-scotland" ? "en-GB" : (voiceProfile.lang || "en-US"); }
-  utter.pitch = voiceProfile.pitch || 1;
-  utter.rate = voiceProfile.rate || 0.9;
-  utter.onend = onEnd || null;
-  window.speechSynthesis.speak(utter);
+// Browsers (Chrome especially) load their voice list a moment after the page opens. Speaking
+// before then falls back to the default system voice, so the first reply waits briefly for it.
+function voicesReady(timeout = 1500) {
+  const synth = window.speechSynthesis;
+  if (synth.getVoices().length) return Promise.resolve();
+  return new Promise((resolve) => {
+    const finish = () => { synth.removeEventListener("voiceschanged", finish); clearTimeout(timer); resolve(); };
+    const timer = setTimeout(finish, timeout);
+    synth.addEventListener("voiceschanged", finish);
+  });
 }
-const stopSpeech = () => window.speechSynthesis && window.speechSynthesis.cancel(); // onend clears the lit portrait
+
+// Long replies are spoken a few sentences at a time. One long utterance can cut off partway in
+// Chrome (about 15 seconds in with its online voices), and shorter pieces also start sooner.
+function speechChunks(text, target = 200, max = 260) {
+  const sentences = text.match(/[^.!?]+(?:[.!?]+["')\]]*|$)\s*/g) || [text];
+  const pieces = [];
+  for (const s of sentences) {
+    if (s.length <= max) { pieces.push(s); continue; }
+    let rest = s; // an unusually long sentence is split at its commas
+    while (rest.length > max) {
+      const cut = rest.lastIndexOf(", ", max);
+      const at = cut > 40 ? cut + 2 : max;
+      pieces.push(rest.slice(0, at));
+      rest = rest.slice(at);
+    }
+    if (rest.trim()) pieces.push(rest);
+  }
+  const chunks = [];
+  for (const p of pieces) {
+    const last = chunks.length - 1;
+    if (last >= 0 && chunks[last].length + p.length <= target) chunks[last] += p;
+    else chunks.push(p);
+  }
+  return chunks.map((c) => c.trim()).filter(Boolean);
+}
+
+// Device voices distort at strong pitch shifts, so each figure's pitch is softened toward normal
+// (0.82 → 0.89, 1.15 → 1.09). Figures stay distinct, mainly through voice choice and pace.
+const gentlePitch = (p = 1) => Math.min(1.12, Math.max(0.88, 1 + (p - 1) * 0.6));
+
+let speechGen = 0; // bumped whenever speech is stopped or replaced, so stale speech never starts
+// Reads a reply aloud: in the figure's natural voice when the visitor has turned natural voices on
+// and they're ready, otherwise in a device voice. onEnd runs exactly once, whether the reply
+// finishes, is stopped, or fails. With queue, it waits its turn instead of cutting off current speech.
+function speakText(text, voiceProfile = {}, onEnd, { queue = false } = {}) {
+  if (!queue) haltSpeech();
+  let ended = false;
+  const finish = () => { if (!ended) { ended = true; onEnd && onEnd(); } };
+  if (natural.status === "ready" && natural.ctx) {
+    const chunks = speechChunks(forSpeech(text));
+    if (!chunks.length) { finish(); return; }
+    speakNatural(chunks, voiceProfile, finish);
+    return;
+  }
+  speakDevice(text, voiceProfile, finish);
+}
+
+function speakDevice(text, voiceProfile, finish) {
+  const synth = window.speechSynthesis;
+  if (!synth) { finish(); return; }
+  const gen = speechGen;
+  const start = () => {
+    if (gen !== speechGen) { finish(); return; }
+    const chunks = speechChunks(forSpeech(text));
+    if (!chunks.length) { finish(); return; }
+    const chosen = pickVoice(voiceProfile);
+    const lang = chosen ? chosen.lang : voiceProfile.lang === "en-GB-scotland" ? "en-GB" : (voiceProfile.lang || "en-US");
+    chunks.forEach((chunk, i) => {
+      const utter = new SpeechSynthesisUtterance(chunk);
+      if (chosen) utter.voice = chosen;
+      utter.lang = lang;
+      utter.pitch = gentlePitch(voiceProfile.pitch || 1);
+      utter.rate = voiceProfile.rate || 0.9;
+      if (i === chunks.length - 1) utter.onend = finish;
+      utter.onerror = finish; // stopped, interrupted or failed: release the lit portrait
+      synth.speak(utter);
+    });
+  };
+  // Speak right away when voices are already loaded (keeps iPhone/iPad happy); otherwise wait briefly.
+  if (synth.getVoices().length) start(); else voicesReady().then(start);
+}
+
+function haltSpeech() {
+  speechGen++;
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  [...naturalPlaying].forEach((h) => h.stop());
+}
+const stopSpeech = haltSpeech; // the onEnd of whatever was speaking clears the lit portrait
+
+// ── NATURAL VOICES (Kokoro) ───────────────────────────────────────────────────
+// An optional free AI voice (Kokoro, Apache-2.0 licence) that runs on the visitor's own graphics
+// chip, so there's no per-use cost. Visitors turn it on once; the model (about 165 MB) downloads
+// from Hugging Face and the browser keeps it. (The half-precision model is used because the browser
+// keeps it reliably and it's as fast as the full one; the full 330 MB file wasn't kept between visits.) It's offered only where the browser has WebGPU
+// (Chrome and Edge on most computers), because elsewhere it can't keep pace with speech.
+// It runs in a background worker so the page stays responsive. Device voices remain the default,
+// and take over if Kokoro can't start or fails partway through a reply.
+const KOKORO_LIB = "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm";
+const KOKORO_MODEL = "onnx-community/Kokoro-82M-v1.0-ONNX";
+const NATURAL_KEY = "intexiau-natural-voices";
+const KOKORO_WORKER = `
+let tts = null, chain = Promise.resolve();
+const send = (m, t) => self.postMessage(m, t || []);
+async function load() {
+  const { KokoroTTS } = await import("${KOKORO_LIB}");
+  const files = {};
+  tts = await KokoroTTS.from_pretrained("${KOKORO_MODEL}", {
+    dtype: "fp16", device: "webgpu",
+    progress_callback: (p) => {
+      if (p.status !== "progress" || !p.total) return;
+      files[p.file] = [p.loaded, p.total];
+      let loaded = 0, total = 0;
+      for (const [l, t] of Object.values(files)) { loaded += l; total += t; }
+      send({ type: "progress", loaded, total });
+    },
+  });
+  await tts.generate("Good day.", { voice: "af_heart" }); // warm-up, so the first real reply starts promptly
+}
+self.onmessage = ({ data }) => {
+  chain = chain.then(async () => {
+    try {
+      if (data.type === "load") { await load(); send({ type: "ready" }); }
+      if (data.type === "speak") {
+        const out = await tts.generate(data.text, { voice: data.voice, speed: data.speed });
+        // The half-precision model comes out about twice as loud as the others, with peaks that
+        // would crackle; halving it matches their level and keeps it within range.
+        const a = out.audio;
+        for (let i = 0; i < a.length; i++) a[i] = Math.max(-1, Math.min(1, a[i] * 0.5));
+        send({ type: "audio", id: data.id, audio: out.audio, rate: out.sampling_rate }, [out.audio.buffer]);
+      }
+    } catch (e) {
+      send({ type: data.type === "speak" ? "failed" : "error", id: data.id, message: String((e && e.message) || e) });
+    }
+  });
+};
+`;
+
+// status: "off" | "loading" | "ready" | "error"
+const natural = { status: "off", loaded: 0, total: 0, message: "", worker: null, ctx: null, nextId: 0, pending: new Map(), listeners: new Set() };
+const naturalPlaying = new Set(); // replies being read in a natural voice, each with a stop()
+function setNatural(patch) { Object.assign(natural, patch); natural.listeners.forEach((fn) => fn()); }
+
+let naturalSupport = null;
+function naturalSupported() {
+  naturalSupport = naturalSupport || (async () => {
+    try { return !!(window.Worker && window.AudioContext && navigator.gpu && (await navigator.gpu.requestAdapter())); }
+    catch { return false; }
+  })();
+  return naturalSupport;
+}
+const rememberNatural = (on) => { try { if (on) localStorage.setItem(NATURAL_KEY, "on"); else localStorage.removeItem(NATURAL_KEY); } catch { /* private mode */ } };
+const naturalRemembered = () => { try { return localStorage.getItem(NATURAL_KEY) === "on"; } catch { return false; } };
+
+function startNatural() {
+  if (natural.worker) return;
+  try {
+    natural.ctx = natural.ctx || new AudioContext();
+    natural.ctx.resume().catch(() => {});
+    const url = URL.createObjectURL(new Blob([KOKORO_WORKER], { type: "text/javascript" }));
+    const w = new Worker(url, { type: "module" });
+    natural.worker = w;
+    w.onmessage = ({ data }) => {
+      if (data.type === "progress") setNatural({ loaded: data.loaded, total: data.total });
+      else if (data.type === "ready") setNatural({ status: "ready" });
+      else if (data.type === "error") { endNaturalWorker(); setNatural({ status: "error", message: data.message }); }
+      else {
+        const reply = natural.pending.get(data.id);
+        natural.pending.delete(data.id);
+        if (reply) reply(data.type === "audio" ? data : null);
+      }
+    };
+    w.onerror = (e) => { endNaturalWorker(); setNatural({ status: "error", message: e.message || "The voice worker stopped." }); };
+    setNatural({ status: "loading", loaded: 0, total: 0, message: "" });
+    w.postMessage({ type: "load" });
+  } catch (e) {
+    endNaturalWorker();
+    setNatural({ status: "error", message: String((e && e.message) || e) });
+  }
+}
+function endNaturalWorker() {
+  if (natural.worker) natural.worker.terminate();
+  natural.worker = null;
+  natural.pending.forEach((reply) => reply(null));
+  natural.pending.clear();
+}
+function turnNaturalOn() { rememberNatural(true); startNatural(); }
+function turnNaturalOff() { rememberNatural(false); haltSpeech(); endNaturalWorker(); setNatural({ status: "off" }); }
+
+// Each figure's Kokoro voice is cast in its collection's figures.js (voiceProfile.kokoroVoice).
+// The pace follows the figure's device-voice rate, nudged up because Kokoro speaks more slowly.
+function naturalVoiceFor(profile = {}) {
+  if (profile.kokoroVoice) return profile.kokoroVoice;
+  const american = (profile.lang || "en-US") === "en-US";
+  return (profile.voiceHint || []).includes("female") ? (american ? "af_heart" : "bf_emma") : (american ? "am_fenrir" : "bm_george");
+}
+const naturalSpeed = (profile = {}) => Math.min(1.05, Math.max(0.85, (profile.rate || 0.9) + 0.06));
+
+function naturalAudio(text, voice, speed) {
+  return new Promise((resolve) => {
+    if (!natural.worker) { resolve(null); return; }
+    const id = ++natural.nextId;
+    natural.pending.set(id, resolve);
+    natural.worker.postMessage({ type: "speak", id, text, voice, speed });
+  });
+}
+
+// Plays a reply piece by piece: while one piece plays, the next is being made, so long answers
+// flow without waiting for the whole reply. Pieces are scheduled back to back with a short breath.
+function speakNatural(chunks, profile, finish) {
+  const ctx = natural.ctx;
+  ctx.resume().catch(() => {});
+  const voice = naturalVoiceFor(profile), speed = naturalSpeed(profile);
+  const gen = speechGen;
+  const sources = [];
+  let stopped = false, timer = null;
+  const handle = {
+    stop() {
+      stopped = true; clearTimeout(timer);
+      sources.forEach((s) => { try { s.stop(); } catch { /* already ended */ } });
+      naturalPlaying.delete(handle);
+      finish();
+    },
+  };
+  naturalPlaying.add(handle);
+  const jobs = [];
+  const ask = (i) => { if (i < chunks.length && !jobs[i]) jobs[i] = naturalAudio(chunks[i], voice, speed); };
+  (async () => {
+    let at = ctx.currentTime;
+    for (let i = 0; i < chunks.length; i++) {
+      ask(i); ask(i + 1);
+      const out = await jobs[i];
+      if (stopped) return;
+      if (!out) {
+        // Kokoro failed partway: a device voice reads the rest once the natural voice finishes.
+        naturalPlaying.delete(handle);
+        const rest = chunks.slice(i).join(" ");
+        timer = setTimeout(() => { if (gen === speechGen) speakDevice(rest, profile, finish); else finish(); }, Math.max(0, at - ctx.currentTime) * 1000);
+        return;
+      }
+      const buf = ctx.createBuffer(1, out.audio.length, out.rate);
+      buf.copyToChannel(out.audio, 0);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      at = Math.max(at, ctx.currentTime + 0.05);
+      src.start(at);
+      sources.push(src);
+      at += buf.duration + 0.15;
+      if (i === chunks.length - 1) src.onended = () => { naturalPlaying.delete(handle); finish(); };
+    }
+  })();
+}
+
+// Lets a component redraw when natural voices change state (loading progress, ready, error).
+function useNatural() {
+  const [, redraw] = useState(0);
+  useEffect(() => {
+    const fn = () => redraw((n) => n + 1);
+    natural.listeners.add(fn);
+    return () => { natural.listeners.delete(fn); };
+  }, []);
+  return natural;
+}
 
 // Replies are written as plain spoken prose, but a stray bit of formatting can still slip through.
 // tidyReply cleans what's shown on screen; forSpeech also turns symbols the device voice would
@@ -234,6 +516,8 @@ export default function VoicesApp({ collection: C, figures }) {
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading, table, turnOf]);
   useEffect(() => { if (window.speechSynthesis) window.speechSynthesis.getVoices(); }, []);
+  // Visitors who turned natural voices on before get them back (from the browser's copy) on return.
+  useEffect(() => { naturalSupported().then((ok) => { if (ok && naturalRemembered()) startNatural(); }); }, []);
 
   // ── NAVIGATION ──────────────────────────────────────────────────────────────
   async function enter() {
@@ -702,6 +986,7 @@ export default function VoicesApp({ collection: C, figures }) {
             </div>
             <div className="vx-dock">
             <ModeSwitch today={today} setToday={setToday} onPick={(q) => setInput(q)} />
+            <VoiceSwitch />
             <div className="vx-composer">
               <button
                 className={`vx-mic ${listening ? "is-on" : ""}`}
@@ -840,6 +1125,7 @@ export default function VoicesApp({ collection: C, figures }) {
             </div>
             <div className="vx-dock">
             <ModeSwitch today={today} setToday={setToday} onPick={(q) => setInput(q)} />
+            <VoiceSwitch />
             <div className="vx-composer">
               <button
                 className={`vx-mic ${listening ? "is-on" : ""}`}
@@ -936,6 +1222,40 @@ const TODAY_STARTERS = [
   "Climate and energy",
   "What makes a good citizen today?",
 ];
+
+// ── NATURAL VOICES SWITCH ─────────────────────────────────────────────────────
+// Shown under the composer only on browsers that can run natural voices well.
+function VoiceSwitch() {
+  const n = useNatural();
+  const [supported, setSupported] = useState(false);
+  useEffect(() => {
+    let live = true;
+    naturalSupported().then((ok) => { if (live) setSupported(ok); });
+    return () => { live = false; };
+  }, []);
+  if (!supported) return null;
+  const mb = (b) => Math.round(b / 1e6);
+  let text, action;
+  if (n.status === "ready") {
+    text = "Natural voices are on.";
+    action = <button type="button" className="vx-link" onClick={turnNaturalOff}>Turn off</button>;
+  } else if (n.status === "loading") {
+    text = n.total ? `Preparing natural voices… ${mb(n.loaded)} of ${mb(n.total)} MB` : "Preparing natural voices…";
+    action = <button type="button" className="vx-link" onClick={turnNaturalOff}>Cancel</button>;
+  } else if (n.status === "error") {
+    text = "Natural voices couldn't start on this device, so its built-in voices are reading aloud.";
+    action = <button type="button" className="vx-link" onClick={() => { endNaturalWorker(); turnNaturalOn(); }}>Try again</button>;
+  } else {
+    text = "Try natural voices: free AI voices that run on your computer. One-time download of about 165 MB.";
+    action = <button type="button" className="vx-link" onClick={turnNaturalOn}>Turn on</button>;
+  }
+  return (
+    <div className="vx-voices" aria-live="polite">
+      <span className="vx-fine">{text}</span>
+      {action}
+    </div>
+  );
+}
 
 function ModeSwitch({ today, setToday, onPick }) {
   return (
@@ -1150,6 +1470,9 @@ const CSS = `
 .vx-slip-n { margin: 6px 0 0; font-size: 12px; color: var(--faint); }
 .vx-today-tag { margin: 0 0 6px; font-size: 12px; color: var(--signal); }
 .vx-mode { padding-top: 10px; }
+.vx-voices { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding-top: 6px; }
+.vx-voices .vx-fine { margin: 0; }
+.vx-voices .vx-link { font-size: 12px; color: var(--signal); }
 .vx-seg-sm { display: inline-flex; margin-bottom: 8px; }
 .vx-seg-sm button { flex: none; padding: 6px 12px; font-size: 13px; }
 .vx-seg-sm button[aria-checked="true"] { background: var(--raise); color: var(--paper); }

@@ -45,7 +45,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Handmade_oil_painting_reproduction_of_Ibn_Battuta_in_Egypt,_a_painting_by_Hippolyte_Leon_Benett..jpg?width=500",
     "portraitCredit": "Léon Benett, imagined scene for Jules Verne’s Découverte de la Terre, 1878 — no portrait from his lifetime survives",
     "monogram": "IB",
-    "voiceProfile": { "pitch": 0.92, "rate": 0.88, "voiceHint": ["male", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "bm_daniel", "pitch": 0.92, "rate": 0.88, "voiceHint": ["male", "english"], "lang": "en-GB" },
     "primarySources": [
       "The Rihla (A Gift to Those Who Contemplate the Wonders of Cities), 1355",
       "Account of the pilgrimage to Mecca (from 1325)",
@@ -66,7 +66,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Marco_Polo_portrait.jpg?width=500",
     "portraitCredit": "Imagined portrait painted long after his lifetime — no portrait from life survives",
     "monogram": "MP",
-    "voiceProfile": { "pitch": 0.98, "rate": 0.92, "voiceHint": ["male", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "am_puck", "pitch": 0.98, "rate": 0.92, "voiceHint": ["male", "english"], "lang": "en-GB" },
     "primarySources": [
       "The Description of the World (Il Milione), c. 1298",
       "Account of the court of Kublai Khan",
@@ -87,7 +87,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Captainjamescookportrait.jpg?width=500",
     "portraitCredit": "Nathaniel Dance, 1776 — National Maritime Museum, Greenwich",
     "monogram": "JC",
-    "voiceProfile": { "pitch": 0.88, "rate": 0.9, "voiceHint": ["male", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "bm_george", "pitch": 0.88, "rate": 0.9, "voiceHint": ["male", "english"], "lang": "en-GB" },
     "primarySources": [
       "Journal of HMS Endeavour (1768–1771)",
       "Journal of HMS Resolution, second voyage (1772–1775)",
@@ -109,7 +109,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Lewis_and_Clark,_side_by_side.jpg?width=500",
     "portraitCredit": "Charles Willson Peale, c. 1807 — Independence National Historical Park",
     "monogram": "L&C",
-    "voiceProfile": { "pitch": 0.9, "rate": 0.9, "voiceHint": ["male", "english"], "lang": "en-US" },
+    "voiceProfile": { "kokoroVoice": "am_michael", "pitch": 0.9, "rate": 0.9, "voiceHint": ["male", "english"], "lang": "en-US" },
     "primarySources": [
       "Jefferson's instructions to Lewis (June 20, 1803)",
       "Journals of the Lewis and Clark Expedition (1804–1806)",
@@ -131,7 +131,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait_of_Mary_Kingsley.jpg?width=500",
     "portraitCredit": "Photograph, 1890s",
     "monogram": "MK",
-    "voiceProfile": { "pitch": 1.12, "rate": 0.94, "voiceHint": ["female", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "bf_emma", "pitch": 1.12, "rate": 0.94, "voiceHint": ["female", "english"], "lang": "en-GB" },
     "primarySources": [
       "Travels in West Africa (1897)",
       "West African Studies (1899)",
@@ -152,7 +152,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Matthew_Henson_1910.jpg?width=500",
     "portraitCredit": "Photograph, 1910",
     "monogram": "MH",
-    "voiceProfile": { "pitch": 0.92, "rate": 0.9, "voiceHint": ["male", "english"], "lang": "en-US" },
+    "voiceProfile": { "kokoroVoice": "am_onyx", "pitch": 0.92, "rate": 0.9, "voiceHint": ["male", "english"], "lang": "en-US" },
     "primarySources": [
       "A Negro Explorer at the North Pole (1912)",
       "Account of the 1909 polar journey",
@@ -172,7 +172,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Roald_Amundsen_cph.3b17878.jpg?width=500",
     "portraitCredit": "Photograph — Library of Congress",
     "monogram": "RA",
-    "voiceProfile": { "pitch": 0.86, "rate": 0.88, "voiceHint": ["male", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "am_echo", "pitch": 0.86, "rate": 0.88, "voiceHint": ["male", "english"], "lang": "en-GB" },
     "primarySources": [
       "The North West Passage (1908)",
       "The South Pole (1912)",
@@ -193,7 +193,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Ernest_Henry_Shackleton_(1921_portrait).jpg?width=500",
     "portraitCredit": "Photograph, 1921",
     "monogram": "ES",
-    "voiceProfile": { "pitch": 0.9, "rate": 0.92, "voiceHint": ["male", "english"], "lang": "en-GB" },
+    "voiceProfile": { "kokoroVoice": "bm_fable", "pitch": 0.9, "rate": 0.92, "voiceHint": ["male", "english"], "lang": "en-GB" },
     "primarySources": [
       "The Heart of the Antarctic (1909)",
       "South: The Story of Shackleton's Last Expedition (1919)",
@@ -213,7 +213,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Isabella_Bird.jpg?width=500",
     "portraitCredit": "Photograph, 19th century",
     "monogram": "IB",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bf_isabella", 
       "pitch": 1.08,
       "rate": 0.9,
       "voiceHint": [
@@ -243,7 +243,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Stieler,_Joseph_Karl_-_Alexander_von_Humboldt_-_1843.jpg?width=500",
     "portraitCredit": "Joseph Karl Stieler, 1843",
     "monogram": "AH",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_eric", 
       "pitch": 0.9,
       "rate": 0.9,
       "voiceHint": [
@@ -273,7 +273,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrett_av_Fridtjof_Nansen,_1896_(4583612654).jpg?width=500",
     "portraitCredit": "Photograph, 1896 — National Library of Norway",
     "monogram": "FN",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_liam", 
       "pitch": 0.88,
       "rate": 0.9,
       "voiceHint": [
@@ -303,7 +303,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/David_Livingstone_by_Thomas_Annan.jpg?width=500",
     "portraitCredit": "Thomas Annan, photograph, 1864",
     "monogram": "DL",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bm_lewis", 
       "pitch": 0.9,
       "rate": 0.88,
       "voiceHint": [
@@ -332,7 +332,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Amelia_Earhart,_1928.jpg?width=500",
     "portraitCredit": "Photograph, 1928",
     "monogram": "AE",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "af_nova", 
       "pitch": 1.08,
       "rate": 0.95,
       "voiceHint": [

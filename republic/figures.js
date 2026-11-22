@@ -37,7 +37,7 @@ export const FIGURES = [
     "years": "1732\u20131799",
     "portrait": "/portraits/washington.jpg",
     "portraitCredit": "Gilbert Stuart, c. 1796 \u2014 National Portrait Gallery",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_fenrir", 
       "pitch": 0.85,
       "rate": 0.88,
       "voiceHint": [
@@ -63,7 +63,7 @@ export const FIGURES = [
     "years": "1755\u20131804",
     "portrait": "/portraits/hamilton.jpg",
     "portraitCredit": "John Trumbull, 1806 \u2014 National Portrait Gallery",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_liam", 
       "pitch": 1,
       "rate": 1,
       "voiceHint": [
@@ -89,7 +89,7 @@ export const FIGURES = [
     "years": "1743\u20131826",
     "portrait": "/portraits/jefferson.jpg",
     "portraitCredit": "Rembrandt Peale, 1800 \u2014 White House Collection",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_michael", 
       "pitch": 0.92,
       "rate": 0.9,
       "voiceHint": [
@@ -115,7 +115,7 @@ export const FIGURES = [
     "years": "1751\u20131836",
     "portrait": "/portraits/madison.jpg",
     "portraitCredit": "John Vanderlyn, 1816 \u2014 White House Collection",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_echo", 
       "pitch": 0.9,
       "rate": 0.85,
       "voiceHint": [
@@ -141,7 +141,7 @@ export const FIGURES = [
     "years": "1735\u20131826",
     "portrait": "/portraits/adams.jpg",
     "portraitCredit": "John Trumbull, c. 1792 \u2014 White House Collection",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_eric", 
       "pitch": 0.88,
       "rate": 0.9,
       "voiceHint": [
@@ -168,7 +168,7 @@ export const FIGURES = [
     "years": "1706\u20131790",
     "portrait": "/portraits/franklin.jpg",
     "portraitCredit": "Joseph Duplessis, 1778 \u2014 Metropolitan Museum of Art / Commons",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_puck", 
       "pitch": 0.82,
       "rate": 0.88,
       "voiceHint": [
@@ -194,7 +194,7 @@ export const FIGURES = [
     "years": "1758\u20131831",
     "portrait": "/portraits/monroe.jpg",
     "portraitCredit": "Samuel Morse, 1819 \u2014 White House Collection",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_onyx", 
       "pitch": 0.87,
       "rate": 0.87,
       "voiceHint": [
@@ -219,7 +219,7 @@ export const FIGURES = [
     "years": "1745\u20131829",
     "portrait": "/portraits/jay.jpg",
     "portraitCredit": "Gilbert Stuart, c. 1794 \u2014 National Portrait Gallery",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_michael", 
       "pitch": 0.88,
       "rate": 0.87,
       "voiceHint": [
@@ -245,7 +245,7 @@ export const FIGURES = [
     "years": "1737\u20131809",
     "portrait": "/portraits/paine.jpg",
     "portraitCredit": "After Romney (rev1) \u2014 National Portrait Gallery / Commons",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "bm_george", 
       "pitch": 0.95,
       "rate": 0.98,
       "voiceHint": [
@@ -271,7 +271,7 @@ export const FIGURES = [
     "years": "1722\u20131803",
     "portrait": "/portraits/samuel_adams.jpg",
     "portraitCredit": "John Singleton Copley, c. 1772 \u2014 Museum of Fine Arts, Boston",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_fenrir", 
       "pitch": 0.87,
       "rate": 0.92,
       "voiceHint": [
@@ -298,7 +298,7 @@ export const FIGURES = [
     "years": "1736\u20131799",
     "portrait": "/portraits/henry.jpg",
     "portraitCredit": "Thomas Sully, after Lawrence, 1851 \u2014 Colonial Williamsburg",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "am_puck", 
       "pitch": 0.9,
       "rate": 1,
       "voiceHint": [
@@ -324,7 +324,7 @@ export const FIGURES = [
     "years": "1744\u20131818",
     "portrait": "/portraits/abigail.jpg",
     "portraitCredit": "Gilbert Stuart, c. 1800\u20131815 \u2014 National Gallery of Art",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "af_heart", 
       "pitch": 1.15,
       "rate": 0.88,
       "voiceHint": [
@@ -353,7 +353,7 @@ export const FIGURES = [
     "years": "1768\u20131849",
     "portrait": "/portraits/dolley.jpg",
     "portraitCredit": "Gilbert Stuart, c. 1804 \u2014 White House Collection",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "af_bella", 
       "pitch": 1.12,
       "rate": 0.9,
       "voiceHint": [
@@ -384,7 +384,7 @@ export const FIGURES = [
     "portrait": "https://commons.wikimedia.org/wiki/Special:FilePath/Mrs_James_Warren_(Mercy_Otis),_by_John_Singleton_Copley.jpg?width=500",
     "portraitCredit": "John Singleton Copley, c. 1763 — Museum of Fine Arts, Boston",
     "monogram": "MW",
-    "voiceProfile": {
+    "voiceProfile": { "kokoroVoice": "af_nicole", 
       "pitch": 1.12,
       "rate": 0.88,
       "voiceHint": [
