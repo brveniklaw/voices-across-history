@@ -70,7 +70,7 @@ How to take part:
   const prompt = `The roundtable so far:\n\n${record}\n\nIt is now your turn, ${figure.name}. Answer the visitor's latest question, and respond to the others where it fits.`;
 
   try {
-    const { data } = await callClaude(system, [{ role: 'user', content: prompt }], 1000);
+    const { data } = await callClaude(system, [{ role: 'user', content: prompt }]);
     const { text: body, sources } = splitSources(replyText(data));
     // If a reply ran past the length limit, end it at its last complete sentence rather than mid-thought.
     const whole = data?.stop_reason === 'max_tokens' ? (body.match(/^[\s\S]*[.!?]["”’)]?(?=\s|$)/)?.[0] || body) : body;

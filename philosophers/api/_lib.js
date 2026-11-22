@@ -158,7 +158,10 @@ export function splitSources(raw = '') {
   return { text: text.slice(0, m.index).trim(), sources };
 }
 
-export async function callClaude(system, messages, maxTokens = 900) {
+// Current models think before replying, and that thinking counts toward max_tokens. A tight cap can
+// leave too little room for the visible reply, which then stops mid-sentence. So the cap is generous;
+// how long a reply is comes from the instructions (about 250 words in chat, 150 at a roundtable).
+export async function callClaude(system, messages, maxTokens = 16000) {
   let lastErr = '';
   for (const model of MODELS) {
     const r = await fetch('https://api.anthropic.com/v1/messages', {

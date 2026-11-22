@@ -34,7 +34,7 @@ export default async function handler(req, res) {
   if (!(await bumpUsage(access))) return res.status(429).json({ error: 'daily_limit', limit: DAILY_MESSAGE_LIMIT });
   try {
     const system = `${figure.systemPrompt}\n\nYou are part of "${COLLECTION.name}", a Voices Across History™ collection by IntexiaU.${HOUSE_RULES}${today ? TODAY_RULES : ''}${CITATION_RULES}`;
-    const { data } = await callClaude(system, history, 1000);
+    const { data } = await callClaude(system, history);
     const { text: body, sources } = splitSources(replyText(data));
     const text = body || 'I find I cannot speak to that from my record.';
     await recordGroupTurn(access, { app: COLLECTION.id, figureId: figure.id, question: (today ? "Today's issues: " : '') + history[history.length - 1].content, answer: withSources(text, sources) });
