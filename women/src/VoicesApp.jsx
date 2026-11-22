@@ -3,6 +3,7 @@
 // each app by scripts/sync-shared.sh, so edit it in /shared and re-run the script.
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { CATALOG, ALL_FIGURES } from "../catalog/index.js"; // every collection, for cross-collection roundtables
 
 const SUPABASE_URL = "https://jbmioozydrvkrizalhbx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_1685vxbdVi0zYx3kbIZM3w__kfJBF42";
@@ -398,6 +399,41 @@ const groupWord = (g) => (g?.kind === "coop" ? "co-op" : "class");
 const newRoundId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 const listNames = (names) => (names.length < 3 ? names.join(" and ") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`);
 
+// Figures from every collection, as seen from this one: a portrait stored in another collection's
+// app is loaded from that collection's address on the site, since this app doesn't carry it.
+function everyFigure(ownId) {
+  const own = ALL_FIGURES.filter((f) => CATALOG.find((c) => c.collection.id === ownId)?.figures.some((g) => g.id === f.id));
+  const rest = ALL_FIGURES.filter((f) => !own.includes(f));
+  return [...own, ...rest].map((f) => {
+    const ownCopy = CATALOG.find((c) => c.collection.id === ownId)?.figures.find((g) => g.id === f.id);
+    if (ownCopy) return { ...ownCopy, home: ownId };
+    const remote = f.portrait && !/^https?:/.test(f.portrait) ? `${HUB}/${f.home}/${f.portrait.replace(/^\//, "")}` : f.portrait;
+    return { ...f, portrait: remote };
+  });
+}
+
+// At a roundtable, each seated figure keeps their own natural voice unless someone already seated
+// has it; then they're given the nearest free voice (same gender, same accent where possible).
+const NATURAL_POOL = {
+  male: ["am_fenrir", "am_michael", "am_puck", "bm_george", "bm_fable", "am_onyx", "am_eric", "am_echo", "am_liam", "bm_lewis", "bm_daniel"],
+  female: ["af_heart", "af_bella", "af_nicole", "bf_emma", "af_aoede", "af_kore", "af_sarah", "bf_isabella", "af_nova", "af_alloy", "bf_alice", "bf_lily"],
+};
+function seatVoices(seated) {
+  const used = new Set();
+  const out = {};
+  for (const f of seated) {
+    const p = f.voiceProfile || {};
+    let v = naturalVoiceFor(p);
+    if (used.has(v)) {
+      const pool = NATURAL_POOL[(p.voiceHint || []).includes("female") ? "female" : "male"].filter((x) => !used.has(x));
+      v = pool.find((x) => x[0] === v[0]) || pool[0] || v;
+    }
+    used.add(v);
+    out[f.id] = { ...p, kokoroVoice: v, key: `seat:${f.id}` };
+  }
+  return out;
+}
+
 function daysLeft(iso) {
   if (!iso) return null;
   return Math.max(0, Math.ceil((new Date(iso) - new Date()) / 86400000));
@@ -459,7 +495,10 @@ export default function VoicesApp({ collection: C, figures }) {
 
   // roundtable
   const [picking, setPicking] = useState(false);
-  const [panel, setPanel] = useState([]); // figure ids, 2–3
+  const [panel, setPanel] = useState([]); // figure ids, 2–3, from any collection
+  const [pickFrom, setPickFrom] = useState(C.id); // which collection the roundtable picker is showing, or "all"
+  const everyone = useRef(null);
+  if (!everyone.current) everyone.current = everyFigure(C.id);
   const [table, setTable] = useState([]); // [{ speaker: "visitor" | figureId, text, system? }]
   const [turnOf, setTurnOf] = useState(null); // figure currently answering
   const speechChain = useRef(Promise.resolve());
@@ -647,7 +686,8 @@ export default function VoicesApp({ collection: C, figures }) {
   const stopListening = useCallback(() => { recogRef.current?.stop(); setListening(false); }, []);
 
   // ── ROUNDTABLE ──────────────────────────────────────────────────────────────
-  const byId = (id) => figures.find((f) => f.id === id);
+  const byId = (id) => figures.find((f) => f.id === id) || everyone.current.find((f) => f.id === id);
+  const seatProfile = (id) => seatVoices(panel.map(byId).filter(Boolean))[id] || byId(id)?.voiceProfile;
 
   function togglePick(f) {
     setPanel((p) => (p.includes(f.id) ? p.filter((x) => x !== f.id) : p.length >= 3 ? p : [...p, f.id]));
@@ -660,7 +700,8 @@ export default function VoicesApp({ collection: C, figures }) {
     const names = ids.map((id) => byId(id)?.name).filter(Boolean);
     setPanel(ids);
     setPicking(false);
-    setTable([{ speaker: "host", text: `${listNames(names)} have taken their seats. Put a question to the table, and each will answer in turn, responding to the others where their writings agree or differ.` }]);
+    setPickFrom(C.id);
+    setTable([{ speaker: "host", text: `${listNames(names)} have taken their seats in a simulated roundtable. Put a question to the table, and each will answer in turn, drawing on their own writings and on what the record shows of the others, to explore what each would most likely say.` }]);
     setInput(question || "");
     setView("roundtable");
   }
@@ -696,7 +737,7 @@ export default function VoicesApp({ collection: C, figures }) {
       }
       lines = [...lines, { speaker: id, text: data.text, sources: data.sources || [], today: data.mode === "today" }];
       setTable(lines);
-      queueSpeech(`r${lines.length - 1}`, data.text, f.voiceProfile);
+      queueSpeech(`r${lines.length - 1}`, data.text, seatProfile(id));
     }
     setTurnOf(null);
   }, [table, panel, turnOf, token, refreshAccess, today]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -847,6 +888,30 @@ export default function VoicesApp({ collection: C, figures }) {
     const filters = C.filterBy ? ["All", ...Array.from(new Set(figures.map((f) => f[C.filterBy])))] : null;
     const shown = filters && filter !== "All" ? figures.filter((f) => f[C.filterBy] === filter) : figures;
     const sections = C.sections || [{ label: C.sectionLabel || "The collection", match: () => true }];
+    // While seating a roundtable, visitors can browse every collection, not just this one.
+    const crossPick = picking && pickFrom !== C.id;
+    const crossSections = crossPick
+      ? (pickFrom === "all" ? CATALOG : CATALOG.filter((c) => c.collection.id === pickFrom)).map((c) => ({ label: c.collection.name, list: c.figures.map((g) => byId(g.id)).filter(Boolean) }))
+      : null;
+    const pickTabs = [...CATALOG.map((c) => ({ id: c.collection.id, label: c.collection.titleBottom || c.collection.name })), { id: "all", label: "All collections" }];
+    const card = (f) => (
+      <button
+        key={f.id}
+        className={`vx-card ${picking && panel.includes(f.id) ? "is-picked" : ""}`}
+        onClick={() => (picking ? togglePick(f) : openFigure(f))}
+        aria-pressed={picking ? panel.includes(f.id) : undefined}
+        disabled={picking && !panel.includes(f.id) && panel.length >= 3}
+        style={{ "--tint": f.color }}
+      >
+        {picking && panel.includes(f.id) && <span className="vx-pick-badge" aria-hidden="true">{panel.indexOf(f.id) + 1}</span>}
+        <Plate f={f} />
+        <span className="vx-card-body">
+          <span className="vx-card-name">{f.name}</span>
+          <span className="vx-card-title">{f.title}</span>
+          <span className="vx-card-meta"><span>{f.years}</span><span>{f.primarySources.length} sources</span></span>
+        </span>
+      </button>
+    );
     return (
       <Shell vars={vars} era={C.id}>
         <TopBar left={<button className="vx-link" onClick={() => setView("landing")}>{C.titleBottom}</button>} right={account()} />
@@ -855,7 +920,7 @@ export default function VoicesApp({ collection: C, figures }) {
             <h1 className="vx-h1">{picking ? "Seat your roundtable" : "Choose a voice"}</h1>
             <p className="vx-muted">
               {picking
-                ? "Choose two or three voices. Each will answer your question in turn and respond to the others."
+                ? "Choose two or three voices from any collection. Each will answer your question in turn and respond to the others. Roundtables are simulations: speculative conversations exploring what each person would most likely say."
                 : "Every answer is grounded in the figure's own writings. Tap a portrait to begin, or seat a roundtable to hear several voices take up one question."}
             </p>
             {notice && <div className="vx-note vx-note-ok">{notice}</div>}
@@ -863,7 +928,7 @@ export default function VoicesApp({ collection: C, figures }) {
               {!picking ? (
                 <button className="vx-btn vx-btn-quiet" onClick={() => { setPanel([]); setPicking(true); }}>Start a roundtable</button>
               ) : (
-                <button className="vx-btn vx-btn-quiet" onClick={() => { setPicking(false); setPanel([]); }}>Cancel roundtable</button>
+                <button className="vx-btn vx-btn-quiet" onClick={() => { setPicking(false); setPanel([]); setPickFrom(C.id); }}>Cancel roundtable</button>
               )}
               {access?.group?.role === "leader" && <button className="vx-btn vx-btn-quiet" onClick={openClass}>Your {groupWord(access.group)}</button>}
             </div>
@@ -877,41 +942,34 @@ export default function VoicesApp({ collection: C, figures }) {
                 ))}
               </div>
             )}
-            {filters && (
+            {picking && (
+              <div className="vx-chips" role="group" aria-label="Choose voices from a collection">
+                {pickTabs.map((t) => <button key={t.id} aria-pressed={pickFrom === t.id} onClick={() => setPickFrom(t.id)}>{t.label}</button>)}
+              </div>
+            )}
+            {filters && !crossPick && (
               <div className="vx-chips" role="group" aria-label="Filter by era">
                 {filters.map((f) => <button key={f} aria-pressed={filter === f} onClick={() => setFilter(f)}>{f}</button>)}
               </div>
             )}
           </div>
-          {sections.map((sec) => {
-            const list = shown.filter(sec.match);
-            if (!list.length) return null;
-            return (
-              <section key={sec.label} className="vx-section">
-                {sections.length > 1 && <h2 className="vx-section-title">{sec.label}{sec.note && <span> {sec.note}</span>}</h2>}
-                <div className="vx-grid">
-                  {list.map((f) => (
-                    <button
-                      key={f.id}
-                      className={`vx-card ${picking && panel.includes(f.id) ? "is-picked" : ""}`}
-                      onClick={() => (picking ? togglePick(f) : openFigure(f))}
-                      aria-pressed={picking ? panel.includes(f.id) : undefined}
-                      disabled={picking && !panel.includes(f.id) && panel.length >= 3}
-                      style={{ "--tint": f.color }}
-                    >
-                      {picking && panel.includes(f.id) && <span className="vx-pick-badge" aria-hidden="true">{panel.indexOf(f.id) + 1}</span>}
-                      <Plate f={f} />
-                      <span className="vx-card-body">
-                        <span className="vx-card-name">{f.name}</span>
-                        <span className="vx-card-title">{f.title}</span>
-                        <span className="vx-card-meta"><span>{f.years}</span><span>{f.primarySources.length} sources</span></span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
+          {crossSections
+            ? crossSections.map((sec) => (
+                <section key={sec.label} className="vx-section">
+                  {crossSections.length > 1 && <h2 className="vx-section-title">{sec.label}</h2>}
+                  <div className="vx-grid">{sec.list.map(card)}</div>
+                </section>
+              ))
+            : sections.map((sec) => {
+                const list = shown.filter(sec.match);
+                if (!list.length) return null;
+                return (
+                  <section key={sec.label} className="vx-section">
+                    {sections.length > 1 && <h2 className="vx-section-title">{sec.label}{sec.note && <span> {sec.note}</span>}</h2>}
+                    <div className="vx-grid">{list.map(card)}</div>
+                  </section>
+                );
+              })}
         </main>
         {picking && (
           <div className="vx-pickbar" role="status">
@@ -939,7 +997,10 @@ export default function VoicesApp({ collection: C, figures }) {
         <TopBar left={<button className="vx-link" onClick={() => { stopSpeech(); setTurnOf(null); setView("gallery"); }}>All voices</button>} right={account()} />
         <div className="vx-rt-wrap">
           <header className="vx-rt-head">
-            <p className="vx-kicker">Roundtable</p>
+            <p className="vx-kicker">Roundtable · Simulation</p>
+            <p className="vx-sim" role="note">
+              This roundtable is a simulation. These people never met this way, and these are not their words. Each voice is an AI interpretation, drawn from their own documented writings and the record of the others at the table, and offered speculatively to explore what each would most likely say.
+            </p>
             <div className={`vx-table n${seated.length}`} role="group" aria-label="Seated at the table">
               <div className="vx-table-top" aria-hidden="true"><span /></div>
               {seated.map((f, i) => {
@@ -971,7 +1032,8 @@ export default function VoicesApp({ collection: C, figures }) {
                     <div className="vx-a-head">
                       {byId(m.speaker) && <span className="vx-a-face"><Plate f={byId(m.speaker)} /></span>}
                       <span className="vx-a-who">{nameFor(m.speaker)}</span>
-                      <button className="vx-icon" onClick={() => say(`r${i}`, m.text, byId(m.speaker)?.voiceProfile)} aria-label="Read aloud" title="Read aloud">
+                      <span className="vx-sim-tag" title="A speculative simulation of what this person would most likely say">Simulated</span>
+                      <button className="vx-icon" onClick={() => say(`r${i}`, m.text, seatProfile(m.speaker))} aria-label="Read aloud" title="Read aloud">
                         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round"/></svg>
                       </button>
                     </div>
@@ -1024,7 +1086,7 @@ export default function VoicesApp({ collection: C, figures }) {
     const members = groupData?.members || [];
     const countFor = (email) => turns.filter((t) => t.email === email).length;
     const shown = openStudent ? turns.filter((t) => t.email === openStudent) : [];
-    const figureLabel = (t) => (t.app === C.id ? byId(t.figure_id)?.name : null) || t.figure_id.replace(/_/g, " ");
+    const figureLabel = (t) => byId(t.figure_id)?.name || t.figure_id.replace(/_/g, " ");
     return (
       <Shell vars={vars} era={C.id}>
         <TopBar left={<button className="vx-link" onClick={() => setView("gallery")}>All voices</button>} right={account()} />
@@ -1569,6 +1631,8 @@ const CSS = `
 .vx-rt-name { font-family: var(--serif); font-size: 15px; line-height: 1.2; }
 .vx-rt-years { font-size: 12px; color: var(--faint); }
 .vx-rt-host { margin: 0; font-size: 14px; color: var(--muted); font-style: italic; max-width: 70ch; }
+.vx-sim { margin: 0 0 14px; max-width: 72ch; padding: 10px 14px; font-size: 13px; line-height: 1.5; color: var(--muted); border: 1px solid var(--line); border-left: 3px solid var(--signal); border-radius: 8px; background: color-mix(in srgb, var(--deep) 80%, transparent); }
+.vx-sim-tag { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--signal); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
 .vx-rt-host.is-system { color: #F6CABF; font-style: normal; }
 @media (max-width: 700px) {
   .vx-rt-head { padding: 14px 16px 0; } .vx-pickbar { padding: 10px 16px; }
