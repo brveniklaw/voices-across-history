@@ -2,6 +2,7 @@
 // Identity comes from the visitor's IntexiaU account (Supabase Auth); access comes from vah_users,
 // so one membership covers every collection. Copied into each app by scripts/sync-shared.sh.
 import { createClient } from '@supabase/supabase-js';
+import Anthropic from '@anthropic-ai/sdk';
 
 export const admin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -106,7 +107,78 @@ export async function recordGroupTurn(access, turn) {
 }
 
 // ── CLAUDE ──────────────────────────────────────────────────────────────────
-const MODELS = [process.env.ANTHROPIC_MODEL, 'claude-sonnet-5-5', 'claude-sonnet-4-5', 'claude-opus-4-5'].filter(Boolean);
+// One model for every reply (override with ANTHROPIC_MODEL). The client reads ANTHROPIC_API_KEY.
+const anthropic = new Anthropic();
+const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
+// How hard the model thinks before replying. "medium" answers noticeably faster than the model's
+// default ("high") for conversation; set REPLY_EFFORT to low, medium or high to tune it.
+const EFFORT = ['low', 'medium', 'high'].includes(process.env.REPLY_EFFORT) ? process.env.REPLY_EFFORT : 'medium';
+const takesEffort = (m) => /^claude-(sonnet|opus|haiku|fable|mythos)-5/.test(m);
+// If the model declines a request on safety grounds, the API retries it on a fallback model
+// within the same call, so the visitor gets an answer instead of silence.
+const takesFallbacks = (m) => /^claude-(sonnet-5-5|opus-5|fable-5|mythos-5)/.test(m);
+
+// Current models think before replying, and that thinking counts toward max_tokens, so the cap is
+// generous; how long a reply is comes from the instructions (about 250 words in chat, 150 at a
+// roundtable). onText receives the visible reply as it's written, for streaming to the visitor.
+export async function generateReply(system, messages, onText) {
+  const params = { model: MODEL, max_tokens: 16000, system, messages };
+  if (takesEffort(MODEL)) params.output_config = { effort: EFFORT };
+  if (takesFallbacks(MODEL)) Object.assign(params, { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' });
+  const stream = anthropic.beta.messages.stream(params);
+  if (onText) stream.on('text', onText);
+  return stream.finalMessage();
+}
+
+// Streams a reply to the browser as newline-delimited JSON when the browser asks for it
+// (Accept: application/x-ndjson): "delta" lines carry new visible text, then one "done" or "error"
+// line ends it. The SOURCES list at the end of a reply is held back, never shown mid-stream.
+// Returns null for older clients, which get the usual single JSON response instead.
+export function openReplyStream(req, res) {
+  if (!String(req.headers?.accept || '').includes('application/x-ndjson')) return null;
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('X-Accel-Buffering', 'no');
+  let full = '';
+  let sent = 0;
+  const line = (obj) => JSON.stringify(obj) + '\n';
+  return {
+    text(delta) {
+      full += delta;
+      const visible = visibleSoFar(full);
+      if (visible.length > sent) { res.write(line({ type: 'delta', text: visible.slice(sent) })); sent = visible.length; }
+    },
+    done(payload) { res.end(line({ type: 'done', ...payload })); },
+    fail(status, payload) { res.end(line({ type: 'error', status, ...payload })); },
+  };
+}
+
+// The part of a reply that's safe to show while it's still being written: everything before the
+// SOURCES line, minus a last partial line that might turn out to be its start.
+function visibleSoFar(full) {
+  const m = full.match(/(?:^|\n)[ \t]*\**[ \t]*SOURCES?\b/i);
+  let out = m ? full.slice(0, m.index) : full;
+  const nl = out.lastIndexOf('\n');
+  const tail = out.slice(nl + 1).replace(/[\s*]/g, '').toUpperCase();
+  if (tail && tail.length <= 8 && 'SOURCES:'.startsWith(tail)) out = out.slice(0, nl + 1);
+  return out;
+}
+
+// Keeps only citations that name a work on the figure's own list of primary sources, shown with
+// the list's wording, so the app never presents an invented or misdated title as a source.
+export function listedSources(sources, figure) {
+  const norm = (t) => String(t).toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const kept = [];
+  for (const s of sources) {
+    const t = norm(s);
+    if (t.length < 3) continue;
+    const hit = (figure.primarySources || []).find((p) => { const n = norm(p); return n && (n.includes(t) || t.includes(n)); });
+    if (hit && !kept.includes(hit)) kept.push(hit);
+  }
+  return kept.length ? kept : [GENERAL_RECORD];
+}
+export const GENERAL_RECORD = 'The documented record of my life';
 
 export const HOUSE_RULES = `
 
@@ -129,12 +201,16 @@ How your words should sound (every reply may be read aloud by a voice):
 
 // Every reply ends with a short list of the works it drew on; the server splits it off so the app can
 // show it under the answer (it is never read aloud).
-export const CITATION_RULES = `
+// Citations come only from the figure's own list of primary sources (figures.js), copied exactly,
+// so they can be checked; the server drops anything else (listedSources).
+export const citationRules = (figure) => `
 
 Citing your sources:
-- After your reply, add a line that says exactly SOURCES: and then one line for each of your own works you actually drew on, at most four, most important first.
-- Write each as the work's usual title and, if you are sure of it, the year, for example: Federalist No. 10 (1787). Name a specific letter by writer, recipient and date only if you are certain of it.
-- Cite only real works from your own documented record. Never invent a title, date, page or quotation. If you drew only on the general record of your life, write: The documented record of my life.
+- After your reply, add a line that says exactly SOURCES: and then one line for each work you actually drew on, at most four, most important first.
+- Choose only from this list of your works, and copy each title exactly as it is written here:
+${(figure.primarySources || []).map((s) => `  ${s}`).join('\n')}
+- If you drew only on the general record of your life, write: The documented record of my life.
+- In the reply itself, name works the same way. Don't give the day or month of a letter, speech or event unless you're certain of it; the year, or the work's name, is enough. Never invent a title, date or quotation.
 - The SOURCES list is the only place a list is allowed. Don't mention it in the reply itself.`;
 
 // "Today's issues": the visitor asks how the figure might approach a question that arose after their lifetime.
@@ -158,26 +234,19 @@ export function splitSources(raw = '') {
   return { text: text.slice(0, m.index).trim(), sources };
 }
 
-// Current models think before replying, and that thinking counts toward max_tokens. A tight cap can
-// leave too little room for the visible reply, which then stops mid-sentence. So the cap is generous;
-// how long a reply is comes from the instructions (about 250 words in chat, 150 at a roundtable).
-export async function callClaude(system, messages, maxTokens = 16000) {
-  let lastErr = '';
-  for (const model of MODELS) {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model, max_tokens: maxTokens, system, messages }),
-    });
-    if (r.ok) return { data: await r.json(), model };
-    lastErr = await r.text();
-    // Try the next model only if this one isn't available; otherwise stop.
-    if (!(r.status === 404 || (r.status === 400 && /model/i.test(lastErr)))) break;
-  }
-  throw new Error(lastErr || 'Model unavailable');
-}
 
 export const replyText = (data) => (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+
+// Turns a finished model message into what the visitor sees: the reply (ended at its last full
+// sentence if it ran long), and its sources, limited to the figure's listed works.
+export function finishReply(message, figure) {
+  const { text: body, sources } = splitSources(replyText(message));
+  const whole = message?.stop_reason === 'max_tokens' ? (body.match(/^[\s\S]*[.!?]["”’)]?(?=\s|$)/)?.[0] || body) : body;
+  const fallback = message?.stop_reason === 'refusal'
+    ? 'That is not a question I can take up. Perhaps you would ask me something else.'
+    : 'I find I cannot speak to that from my record.';
+  return { text: whole || fallback, sources: whole ? listedSources(sources, figure) : [] };
+}
 
 // Counts one figure reply against the member's daily fair-use limit. Returns false when the limit is reached.
 export async function bumpUsage(access) {

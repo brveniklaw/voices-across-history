@@ -3,7 +3,7 @@
 // each app by scripts/sync-shared.sh, so edit it in /shared and re-run the script.
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { CATALOG, ALL_FIGURES } from "../catalog/index.js"; // every collection, for cross-collection roundtables
+import { CATALOG, ALL_FIGURES, CROSS_ROUNDTABLES } from "../catalog/index.js"; // every collection, for cross-collection roundtables
 
 const SUPABASE_URL = "https://jbmioozydrvkrizalhbx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_1685vxbdVi0zYx3kbIZM3w__kfJBF42";
@@ -191,6 +191,7 @@ const stopSpeech = haltSpeech; // the onEnd of whatever was speaking clears the 
 const KOKORO_LIB = "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm";
 const KOKORO_MODEL = "onnx-community/Kokoro-82M-v1.0-ONNX";
 const NATURAL_KEY = "intexiau-natural-voices";
+const NATURAL_NOTE_KEY = "intexiau-natural-voices-note";
 const KOKORO_WORKER = `
 let tts = null, chain = Promise.resolve();
 const send = (m, t) => self.postMessage(m, t || []);
@@ -412,6 +413,27 @@ function everyFigure(ownId) {
   });
 }
 
+const SIM_NOTICE = "This roundtable is a simulation. These people never met this way, and these are not their words. Each voice is an AI interpretation, drawn from their own documented writings and the record of the others at the table, and offered speculatively to explore what each would most likely say.";
+
+// A roundtable as plain text, for copying, downloading or printing. It always carries the
+// simulation notice and each reply's sources.
+function roundtableText(table, seated, nameOf) {
+  const lines = [
+    "Voices Across History™ Roundtable (simulation)",
+    `Seated: ${seated.map((f) => `${f.name} (${f.years})`).join("; ")}`,
+    new Date().toLocaleString(),
+    SIM_NOTICE,
+  ];
+  for (const m of table) {
+    if (m.system) continue;
+    if (m.speaker === "visitor") lines.push(`You: ${m.text}`);
+    else if (m.speaker === "host") lines.push(`[${m.text}]`);
+    else lines.push(`${nameOf(m.speaker)} (simulated): ${tidyReply(m.text)}${m.sources?.length ? `\nSources: ${m.sources.join("; ")}` : ""}`);
+  }
+  return lines.join("\n\n");
+}
+const escapeHtml = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
 // At a roundtable, each seated figure keeps their own natural voice unless someone already seated
 // has it; then they're given the nearest free voice (same gender, same accent where possible).
 const NATURAL_POOL = {
@@ -450,6 +472,50 @@ async function api(path, { method = "GET", body, token } = {}) {
   return { ok: res.ok, status: res.status, data };
 }
 
+// Like api(), but for a figure's reply: the server streams it as it's written, and onText receives
+// the reply so far, so visitors can start reading within a second or two. Falls back to a plain
+// JSON response (errors such as an expired session or the daily limit always arrive that way).
+async function apiReply(path, { body, token, onText }) {
+  let res;
+  try {
+    res = await fetch(`${API}/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/x-ndjson", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return { ok: false, status: 0, data: {} };
+  }
+  if (!res.body || !(res.headers.get("content-type") || "").includes("ndjson")) {
+    let data = {};
+    try { data = await res.json(); } catch { /* empty */ }
+    return { ok: res.ok, status: res.status, data };
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "", sofar = "";
+  let result = { ok: false, status: 502, data: {} }; // if the stream ends without a verdict
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let nl;
+      while ((nl = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, nl).trim();
+        buffer = buffer.slice(nl + 1);
+        if (!line) continue;
+        let ev;
+        try { ev = JSON.parse(line); } catch { continue; }
+        if (ev.type === "delta") { sofar += ev.text; if (onText) onText(sofar); }
+        else if (ev.type === "done") { const { type, ...data } = ev; result = { ok: true, status: 200, data }; }
+        else if (ev.type === "error") { const { type, status, ...data } = ev; result = { ok: false, status: status || 502, data }; }
+      }
+    }
+  } catch { /* connection dropped: report the failure below */ }
+  return result;
+}
+
 // ── MAIN ──────────────────────────────────────────────────────────────────────
 export default function VoicesApp({ collection: C, figures }) {
   const T = C.theme;
@@ -483,6 +549,8 @@ export default function VoicesApp({ collection: C, figures }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [draft, setDraft] = useState(""); // the reply being written, shown as it streams in
+  const [toolNote, setToolNote] = useState(""); // brief confirmation after copying a transcript
   const [saying, setSaying] = useState(null); // key of the answer being read aloud
   const say = (key, text, profile, opts) => {
     setSpeaking(true); setSaying(key);
@@ -652,12 +720,14 @@ export default function VoicesApp({ collection: C, figures }) {
     setMessages(next);
     setInput("");
     setLoading(true);
-    const { ok, status, data } = await api("chat", {
-      method: "POST",
+    setDraft("");
+    const { ok, status, data } = await apiReply("chat", {
       token,
       body: { figureId: active.id, mode: today ? "today" : "record", messages: next.map((m) => ({ role: m.role, content: m.text })) },
+      onText: setDraft,
     });
     setLoading(false);
+    setDraft("");
     if (ok) {
       setMessages((prev) => [...prev, { role: "assistant", text: data.text, sources: data.sources || [], today: data.mode === "today" }]);
       say(`c${next.length}`, data.text, active.voiceProfile);
@@ -701,7 +771,7 @@ export default function VoicesApp({ collection: C, figures }) {
     setPanel(ids);
     setPicking(false);
     setPickFrom(C.id);
-    setTable([{ speaker: "host", text: `${listNames(names)} have taken their seats in a simulated roundtable. Put a question to the table, and each will answer in turn, drawing on their own writings and on what the record shows of the others, to explore what each would most likely say.` }]);
+    setTable([{ speaker: "host", text: `${listNames(names)} have taken their seats in a simulated roundtable. Put a question to the table, and each will answer in turn, drawing on their own writings and on what the record shows of the others, to explore what each would most likely say. Each question uses ${ids.length} of your daily messages, one per voice.` }]);
     setInput(question || "");
     setView("roundtable");
   }
@@ -712,20 +782,21 @@ export default function VoicesApp({ collection: C, figures }) {
     }));
   }
 
-  const askTable = useCallback(async (text) => {
-    if (!text.trim() || turnOf || panel.length < 2) return;
+  // One round at the table: each seated figure speaks in turn, their reply streaming in as it's
+  // written. A follow-up round has them respond to one another instead of to a new question.
+  async function runRound(startLines, { followUp = false } = {}) {
     const roundId = newRoundId();
-    let lines = [...table, { speaker: "visitor", text: text.trim() }];
-    setTable(lines);
-    setInput("");
+    let lines = startLines;
     for (const id of panel) {
       const f = byId(id);
       setTurnOf(f);
-      const { ok, status, data } = await api("roundtable", {
-        method: "POST",
+      setDraft("");
+      const { ok, status, data } = await apiReply("roundtable", {
         token,
-        body: { figureId: id, panel, roundId, mode: today ? "today" : "record", transcript: lines.filter((l) => !l.system && l.speaker !== "host").map((l) => ({ speaker: l.speaker, text: l.text })) },
+        body: { figureId: id, panel, roundId, followUp, mode: today ? "today" : "record", transcript: lines.filter((l) => !l.system && l.speaker !== "host").map((l) => ({ speaker: l.speaker, text: l.text })) },
+        onText: setDraft,
       });
+      setDraft("");
       if (!ok) {
         setTurnOf(null);
         if (status === 402) { await refreshAccess(token); setView("join"); return; }
@@ -740,6 +811,22 @@ export default function VoicesApp({ collection: C, figures }) {
       queueSpeech(`r${lines.length - 1}`, data.text, seatProfile(id));
     }
     setTurnOf(null);
+  }
+
+  const askTable = useCallback(async (text) => {
+    if (!text.trim() || turnOf || panel.length < 2) return;
+    const lines = [...table, { speaker: "visitor", text: text.trim() }];
+    setTable(lines);
+    setInput("");
+    await runRound(lines);
+  }, [table, panel, turnOf, token, refreshAccess, today]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // "Let them respond": another round in which the figures answer each other, not the visitor.
+  const continueTable = useCallback(async () => {
+    if (turnOf || panel.length < 2 || !table.some((l) => l.speaker === "visitor")) return;
+    const lines = [...table, { speaker: "host", text: "You've invited the table to respond to one another." }];
+    setTable(lines);
+    await runRound(lines, { followUp: true });
   }, [table, panel, turnOf, token, refreshAccess, today]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── CLASS / CO-OP LEADER PAGE ───────────────────────────────────────────────
@@ -932,12 +1019,13 @@ export default function VoicesApp({ collection: C, figures }) {
               )}
               {access?.group?.role === "leader" && <button className="vx-btn vx-btn-quiet" onClick={openClass}>Your {groupWord(access.group)}</button>}
             </div>
-            {!picking && (C.roundtables || []).length > 0 && (
+            {!picking && (
               <div className="vx-suggest" aria-label="Suggested roundtables">
-                {C.roundtables.filter((r) => r.ids.every(byId)).map((r) => (
+                {[...(C.roundtables || []), ...CROSS_ROUNDTABLES.map((r) => ({ ...r, cross: true }))].filter((r) => r.ids.every(byId)).map((r) => (
                   <button key={r.title} className="vx-suggest-card" onClick={() => openRoundtable(r.ids, r.question)}>
                     <span className="vx-suggest-title">{r.title}</span>
                     <span className="vx-suggest-who">{listNames(r.ids.map((id) => speakerName(byId(id))))}</span>
+                    {r.cross && <span className="vx-suggest-tag">Across collections</span>}
                   </button>
                 ))}
               </div>
@@ -973,7 +1061,10 @@ export default function VoicesApp({ collection: C, figures }) {
         </main>
         {picking && (
           <div className="vx-pickbar" role="status">
-            <span>{panel.length ? listNames(panel.map((id) => speakerName(byId(id)))) : "No voices chosen yet"}</span>
+            <span>
+              {panel.length ? listNames(panel.map((id) => speakerName(byId(id)))) : "No voices chosen yet"}
+              <span className="vx-pick-cost">Each question uses one message per voice{panel.length >= 2 ? ` (${panel.length} per question)` : ""}.</span>
+            </span>
             <button className="vx-btn" disabled={panel.length < 2} onClick={() => openRoundtable(panel)}>
               {panel.length < 2 ? `Choose ${2 - panel.length} more` : "Begin the roundtable"}
             </button>
@@ -992,15 +1083,41 @@ export default function VoicesApp({ collection: C, figures }) {
     const live = !!turnOf || speaking;
     const nameFor = (sp) => (sp === "visitor" ? "You" : speakerName(byId(sp) || { name: "" }));
     const voiceSpeaker = saying && saying[0] === "r" ? table[Number(saying.slice(1))]?.speaker : null;
+    const transcript = () => roundtableText(table, seated, (id) => byId(id)?.name || id);
+    const copyTranscript = async () => {
+      try { await navigator.clipboard.writeText(transcript()); setToolNote("copied"); setTimeout(() => setToolNote(""), 1800); }
+      catch { downloadTranscript(); }
+    };
+    const downloadTranscript = () => {
+      const url = URL.createObjectURL(new Blob([transcript()], { type: "text/plain;charset=utf-8" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `roundtable-${seated.map((f) => speakerName(f).toLowerCase()).join("-")}.txt`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    const printTranscript = () => {
+      const w = window.open("", "_blank");
+      if (!w) { downloadTranscript(); return; }
+      w.document.write(`<!doctype html><meta charset="utf-8"><title>Roundtable: ${escapeHtml(seated.map((f) => f.name).join(", "))}</title><body style="font:16px/1.6 Georgia,serif;max-width:46rem;margin:2rem auto;padding:0 1rem;color:#111"><pre style="white-space:pre-wrap;font:inherit">${escapeHtml(transcript())}</pre></body>`);
+      w.document.close();
+      w.focus();
+      w.print();
+    };
     return (
       <Shell vars={vars} era={C.id} className="vx-chat">
         <TopBar left={<button className="vx-link" onClick={() => { stopSpeech(); setTurnOf(null); setView("gallery"); }}>All voices</button>} right={account()} />
         <div className="vx-rt-wrap">
           <header className="vx-rt-head">
             <p className="vx-kicker">Roundtable · Simulation</p>
-            <p className="vx-sim" role="note">
-              This roundtable is a simulation. These people never met this way, and these are not their words. Each voice is an AI interpretation, drawn from their own documented writings and the record of the others at the table, and offered speculatively to explore what each would most likely say.
-            </p>
+            <p className="vx-sim" role="note">{SIM_NOTICE}</p>
+            {table.some((m) => m.speaker === "visitor") && (
+              <div className="vx-rt-tools" aria-label="Save this roundtable">
+                <button type="button" className="vx-link" onClick={copyTranscript}>{toolNote === "copied" ? "Copied" : "Copy transcript"}</button>
+                <button type="button" className="vx-link" onClick={downloadTranscript}>Download</button>
+                <button type="button" className="vx-link" onClick={printTranscript}>Print or save as PDF</button>
+              </div>
+            )}
             <div className={`vx-table n${seated.length}`} role="group" aria-label="Seated at the table">
               <div className="vx-table-top" aria-hidden="true"><span /></div>
               {seated.map((f, i) => {
@@ -1043,7 +1160,18 @@ export default function VoicesApp({ collection: C, figures }) {
                   </div>
                 )
               )}
-              {turnOf && <div className="vx-a"><div className="vx-a-head"><span className="vx-a-who">{speakerName(turnOf)}</span></div><div className="vx-dots"><span /><span /><span /></div></div>}
+              {turnOf && (
+                <div className="vx-a is-page" style={{ "--tint": turnOf.color }}>
+                  <div className="vx-a-head"><span className="vx-a-face"><Plate f={turnOf} /></span><span className="vx-a-who">{speakerName(turnOf)}</span><span className="vx-sim-tag">Simulated</span></div>
+                  {draft ? <p className="vx-a-text">{tidyReply(draft)}</p> : <div className="vx-dots"><span /><span /><span /></div>}
+                </div>
+              )}
+              {!turnOf && table.length > 1 && table[table.length - 1].speaker !== "visitor" && !table[table.length - 1].system && table.some((l) => l.speaker === "visitor") && (
+                <div className="vx-rt-more">
+                  <button type="button" className="vx-btn vx-btn-quiet" onClick={continueTable}>Let them respond to each other</button>
+                  <span className="vx-fine">Uses {seated.length} messages, one per voice.</span>
+                </div>
+              )}
               <div ref={endRef} />
             </div>
             <div className="vx-dock">
@@ -1182,7 +1310,12 @@ export default function VoicesApp({ collection: C, figures }) {
                   </div>
                 )
               )}
-              {loading && <div className="vx-a"><div className="vx-a-head"><span className="vx-a-who">{who}</span></div><div className="vx-dots"><span /><span /><span /></div></div>}
+              {loading && (
+                <div className="vx-a is-page" style={{ "--tint": active.color }}>
+                  <div className="vx-a-head"><span className="vx-a-face"><Plate f={active} /></span><span className="vx-a-who">{who}</span></div>
+                  {draft ? <p className="vx-a-text">{tidyReply(draft)}</p> : <div className="vx-dots"><span /><span /><span /></div>}
+                </div>
+              )}
               <div ref={endRef} />
             </div>
             <div className="vx-dock">
@@ -1270,7 +1403,11 @@ function Cites({ list, f }) {
         <div className="vx-slip" role="note">
           <p className="vx-slip-t">{it.title}</p>
           {it.year && <p className="vx-slip-y">{it.year}</p>}
-          <p className="vx-slip-n">{onList(f, it.title) ? "On this voice's list of primary sources." : "Named by the AI from the wider record. Check the original before quoting it."}</p>
+          <p className="vx-slip-n">
+            {/documented record of my life/i.test(it.title)
+              ? "Drawn from the general record of this person's life rather than one work."
+              : onList(f, it.title) ? "On this voice's list of primary sources." : "Named by the AI from the wider record. Check the original before quoting it."}
+          </p>
         </div>
       )}
     </div>
@@ -1289,13 +1426,25 @@ const TODAY_STARTERS = [
 // Shown under the composer only on browsers that can run natural voices well.
 function VoiceSwitch() {
   const n = useNatural();
-  const [supported, setSupported] = useState(false);
+  const [supported, setSupported] = useState(null); // null until the browser has been checked
+  const [noteHidden, setNoteHidden] = useState(() => { try { return localStorage.getItem(NATURAL_NOTE_KEY) === "hidden"; } catch { return false; } });
   useEffect(() => {
     let live = true;
     naturalSupported().then((ok) => { if (live) setSupported(ok); });
     return () => { live = false; };
   }, []);
-  if (!supported) return null;
+  if (supported === null) return null;
+  if (!supported) {
+    // Where natural voices can't run, say once where they can; the visitor can dismiss it for good.
+    if (noteHidden) return null;
+    const hide = () => { setNoteHidden(true); try { localStorage.setItem(NATURAL_NOTE_KEY, "hidden"); } catch { /* private mode */ } };
+    return (
+      <div className="vx-voices-note">
+        <span className="vx-fine">Natural AI voices are available in Chrome or Edge on a computer. This device reads aloud with its built-in voices.</span>
+        <button type="button" onClick={hide} aria-label="Dismiss this note">×</button>
+      </div>
+    );
+  }
   const mb = (b) => Math.round(b / 1e6);
   let text, action;
   if (n.status === "ready") {
@@ -1633,6 +1782,15 @@ const CSS = `
 .vx-rt-host { margin: 0; font-size: 14px; color: var(--muted); font-style: italic; max-width: 70ch; }
 .vx-sim { margin: 0 0 14px; max-width: 72ch; padding: 10px 14px; font-size: 13px; line-height: 1.5; color: var(--muted); border: 1px solid var(--line); border-left: 3px solid var(--signal); border-radius: 8px; background: color-mix(in srgb, var(--deep) 80%, transparent); }
 .vx-sim-tag { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--signal); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
+.vx-suggest-tag { align-self: flex-start; margin-top: 2px; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--signal); }
+.vx-pickbar .vx-pick-cost { display: block; margin-top: 2px; font-size: 12px; color: var(--faint); }
+.vx-rt-more { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.vx-rt-more .vx-fine { margin: 0; }
+.vx-rt-tools { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 12px; }
+.vx-rt-tools .vx-link { font-size: 13px; padding: 2px 0; }
+.vx-voices-note { display: flex; align-items: baseline; gap: 8px; padding-top: 6px; }
+.vx-voices-note .vx-fine { margin: 0; }
+.vx-voices-note button { background: none; border: none; color: var(--faint); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 4px; }
 .vx-rt-host.is-system { color: #F6CABF; font-style: normal; }
 @media (max-width: 700px) {
   .vx-rt-head { padding: 14px 16px 0; } .vx-pickbar { padding: 10px 16px; }

@@ -7,7 +7,7 @@
 // each speaker is briefed on the others at the table: their lives, their documented works, and how
 // the record portrays their views. That briefing lets a figure answer someone from another century
 // on the strength of that person's actual record, rather than guessing.
-import { getUser, accessFor, readJson, DAILY_MESSAGE_LIMIT, HOUSE_RULES, CITATION_RULES, TODAY_RULES, splitSources, callClaude, replyText, bumpUsage, recordGroupTurn } from './_lib.js';
+import { getUser, accessFor, readJson, DAILY_MESSAGE_LIMIT, HOUSE_RULES, citationRules, TODAY_RULES, generateReply, finishReply, openReplyStream, bumpUsage, recordGroupTurn } from './_lib.js';
 import { COLLECTION } from '../figures.js';
 import { ALL_FIGURES } from '../catalog/index.js';
 
@@ -35,8 +35,10 @@ export default async function handler(req, res) {
   const access = await accessFor(user);
   if (!access.active) return res.status(402).json({ error: 'membership_required' });
 
-  const { figureId, panel, transcript, roundId, mode } = readJson(req);
+  const { figureId, panel, transcript, roundId, mode, followUp } = readJson(req);
   const today = mode === 'today';
+  // followUp: the visitor asked the table to respond to one another, with no new question.
+  const continuing = followUp === true;
   const ids = Array.isArray(panel) ? [...new Set(panel.map(String))] : [];
   if (ids.length < 2 || ids.length > 3 || !ids.every(nameOf)) return res.status(400).json({ error: 'Choose two or three voices.' });
   const figure = byId(String(figureId));
@@ -65,20 +67,27 @@ How to take part:
 - Engage with your companions by name. Where your documented views agree or disagree with theirs, say so directly and explain why from your own record. Disagree with courtesy but without softening what you actually held.
 - When you refer to a companion's views, ground it in their documented record as briefed above, and frame it as your understanding ("as I understand your writings…"). Never invent what they wrote or said, never speak for them, and respond only to the words they actually said in the transcript.
 - Keep this turn to about 150 words so the others have room to answer.`;
-  const system = `${figure.systemPrompt}\n\nYou are taking part in a Voices Across History™ roundtable by IntexiaU.${HOUSE_RULES}${today ? TODAY_RULES : ''}${roundRules}${CITATION_RULES}`;
+  const continueRules = continuing ? `
+- The visitor has asked the table to respond to one another. This turn, don't repeat your earlier answer or address the visitor's question afresh: take up what your companions have just said, press them where you disagree, concede where they have a point, and ask them a question if it fits. Keep this turn to about 120 words.` : '';
+  const system = `${figure.systemPrompt}\n\nYou are taking part in a Voices Across History™ roundtable by IntexiaU.${HOUSE_RULES}${today ? TODAY_RULES : ''}${roundRules}${continueRules}${citationRules(figure)}`;
   const record = lines.map((t) => `[${t.speaker === 'visitor' ? 'Visitor' : nameOf(t.speaker)}]: ${t.text}`).join('\n\n');
-  const prompt = `The roundtable so far:\n\n${record}\n\nIt is now your turn, ${figure.name}. Answer the visitor's latest question, and respond to the others where it fits.`;
+  const prompt = continuing
+    ? `The roundtable so far:\n\n${record}\n\nThe visitor has asked the table to respond to one another. It is now your turn, ${figure.name}. Respond to what the others have just said.`
+    : `The roundtable so far:\n\n${record}\n\nIt is now your turn, ${figure.name}. Answer the visitor's latest question, and respond to the others where it fits.`;
 
+  const live = openReplyStream(req, res);
   try {
-    const { data } = await callClaude(system, [{ role: 'user', content: prompt }]);
-    const { text: body, sources } = splitSources(replyText(data));
-    // If a reply ran past the length limit, end it at its last complete sentence rather than mid-thought.
-    const whole = data?.stop_reason === 'max_tokens' ? (body.match(/^[\s\S]*[.!?]["”’)]?(?=\s|$)/)?.[0] || body) : body;
-    const text = whole || 'I find I cannot speak to that from my record.';
-    await recordGroupTurn(access, { app: COLLECTION.id, figureId: figure.id, roundId: String(roundId || '').slice(0, 64), question: (today ? "Today's issues: " : '') + question.text, answer: withSources(text, sources) });
-    return res.status(200).json({ text, sources, mode: today ? 'today' : 'record' });
+    const message = await generateReply(system, [{ role: 'user', content: prompt }], live ? (t) => live.text(t) : null);
+    const { text, sources } = finishReply(message, figure);
+    const asked = continuing ? `(Table responds to one another) ${question.text}` : question.text;
+    await recordGroupTurn(access, { app: COLLECTION.id, figureId: figure.id, roundId: String(roundId || '').slice(0, 64), question: (today ? "Today's issues: " : '') + asked, answer: withSources(text, sources) });
+    const payload = { text, sources, mode: today ? 'today' : 'record' };
+    if (live) return live.done(payload);
+    return res.status(200).json(payload);
   } catch (err) {
     console.error('Anthropic error:', String(err).slice(0, 500));
-    return res.status(502).json({ error: 'The roundtable could not continue. Please try again.' });
+    const error = 'The roundtable could not continue. Please try again.';
+    if (live) return live.fail(502, { error });
+    return res.status(502).json({ error });
   }
 }
