@@ -148,7 +148,8 @@ Today's issues mode:
 
 export function splitSources(raw = '') {
   const text = String(raw);
-  const m = text.match(/\n?\s*\**\s*SOURCES?\s*:?\s*\**\s*\n([\s\S]*)$/i);
+  // The list must start on its own line, so the word "sources" inside a sentence is never mistaken for it.
+  const m = text.match(/(?:^|\n)[ \t]*\**[ \t]*SOURCES?[ \t]*\**[ \t]*:?[ \t]*\**[ \t]*\n([\s\S]*)$/i);
   if (!m) return { text: text.trim(), sources: [] };
   const sources = m[1].split('\n')
     .map((l) => l.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').replace(/\*+/g, '').trim())

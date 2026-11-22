@@ -61,7 +61,7 @@ ${companions.map((f) => `---\n${briefing(f)}`).join('\n')}
 
 How to take part:
 - Answer the visitor's latest question in your own voice, from your own record, giving the answer you would most plausibly give.
-- You have been briefed on your companions' lives and documented works above, and may draw on that knowledge even if they lived after you or you could never have read them. At this table that knowledge is an exception to the rule about people beyond your time. If a companion lived after you, acknowledge naturally, once, that you know their work only through what has been set before you here.
+- You have been briefed on your companions' lives and documented works above, and may draw on that knowledge even if they lived after you or you could never have read them. At this table that knowledge is an exception to the rule about people beyond your time. If a companion lived after you, acknowledge naturally, once, that you know their work only through what has been set before you here. If they lived before you and their work was known in your day, you may speak of it as a reader of your time would.
 - Engage with your companions by name. Where your documented views agree or disagree with theirs, say so directly and explain why from your own record. Disagree with courtesy but without softening what you actually held.
 - When you refer to a companion's views, ground it in their documented record as briefed above, and frame it as your understanding ("as I understand your writings…"). Never invent what they wrote or said, never speak for them, and respond only to the words they actually said in the transcript.
 - Keep this turn to about 150 words so the others have room to answer.`;
@@ -70,9 +70,11 @@ How to take part:
   const prompt = `The roundtable so far:\n\n${record}\n\nIt is now your turn, ${figure.name}. Answer the visitor's latest question, and respond to the others where it fits.`;
 
   try {
-    const { data } = await callClaude(system, [{ role: 'user', content: prompt }], 700);
+    const { data } = await callClaude(system, [{ role: 'user', content: prompt }], 1000);
     const { text: body, sources } = splitSources(replyText(data));
-    const text = body || 'I find I cannot speak to that from my record.';
+    // If a reply ran past the length limit, end it at its last complete sentence rather than mid-thought.
+    const whole = data?.stop_reason === 'max_tokens' ? (body.match(/^[\s\S]*[.!?]["”’)]?(?=\s|$)/)?.[0] || body) : body;
+    const text = whole || 'I find I cannot speak to that from my record.';
     await recordGroupTurn(access, { app: COLLECTION.id, figureId: figure.id, roundId: String(roundId || '').slice(0, 64), question: (today ? "Today's issues: " : '') + question.text, answer: withSources(text, sources) });
     return res.status(200).json({ text, sources, mode: today ? 'today' : 'record' });
   } catch (err) {
