@@ -1,0 +1,17 @@
+# Sentinel safe patch: weekly dependency update PRs (opens PRs only; nothing auto-merges).
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directories:
+      - "/republic"
+      - "/philosophers"
+      - "/inventors"
+      - "/explorers"
+      - "/women"
+      - "/admin"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
